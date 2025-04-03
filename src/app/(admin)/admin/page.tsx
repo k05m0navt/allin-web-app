@@ -197,17 +197,47 @@ export default function AdminDashboard() {
           <table className="w-full">
             <thead>
               <tr>
-                <th className="text-left">Name</th>
-                <th className="text-left">Email</th>
-                <th className="text-left">Created At</th>
+                <th className="text-left p-2 border-b">Name</th>
+                <th className="text-left p-2 border-b">Email</th>
+                <th className="text-left p-2 border-b">Created At</th>
+                <th className="text-right p-2 border-b">Actions</th>
               </tr>
             </thead>
             <tbody>
               {players.map((player) => (
-                <tr key={player.id} className="border-t">
-                  <td>{player.name}</td>
-                  <td>{player.email}</td>
-                  <td>{player.createdAt.toLocaleDateString()}</td>
+                <tr
+                  key={player.id}
+                  className="hover:bg-gray-50 transition-colors"
+                >
+                  <td className="p-2 border-b">{player.name}</td>
+                  <td className="p-2 border-b">{player.email}</td>
+                  <td className="p-2 border-b">
+                    {new Date(player.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="p-2 border-b text-right">
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // TODO: Implement edit player functionality
+                          toast.info(`Edit ${player.name}`);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          // TODO: Implement delete player functionality
+                          toast.warning(`Delete ${player.name}`);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
