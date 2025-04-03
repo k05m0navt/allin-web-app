@@ -10,14 +10,19 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const authService = {
-  signUp: async (email: string, password: string, name: string) => {
+  signUp: async (
+    email: string,
+    password: string,
+    name: string,
+    isAdmin: boolean = false
+  ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           name,
-          role: "PLAYER",
+          role: isAdmin ? "ADMIN" : "PLAYER",
         },
       },
     });
@@ -38,7 +43,9 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return user;
   },
 };

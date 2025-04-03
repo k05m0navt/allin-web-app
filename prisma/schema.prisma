@@ -26,11 +26,14 @@ enum UserRole {
 
 model Player {
   id        String   @id @default(cuid())
+  name      String
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   
   tournaments PlayerTournament[]
   statistics  PlayerStatistics?
+
+  createdAt DateTime @default(now())
 }
 
 model Tournament {

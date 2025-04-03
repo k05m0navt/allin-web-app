@@ -25,8 +25,30 @@ export default function AdminDashboard() {
           return;
         }
 
+        // Optional: Add role-based access control
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const userRole = session?.user?.user_metadata?.role;
+
+        if (userRole !== "ADMIN") {
+          router.push("/login");
+          return;
+        }
+
         // Fetch players from database
-        const fetchedPlayers = await prisma.player.findMany();
+        const fetchedPlayers = await prisma.player.findMany({
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            createdAt: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
+
         setPlayers(fetchedPlayers);
         setUser(currentUser);
       } catch (error) {
