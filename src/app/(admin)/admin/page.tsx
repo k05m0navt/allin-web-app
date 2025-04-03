@@ -59,12 +59,14 @@ export default function AdminDashboard() {
         });
 
         // Transform players to include user details
-        const transformedPlayers: PlayerWithUserDetails[] = fetchedPlayers.map((player: any) => ({
-          id: player.id,
-          name: player.name,
-          email: player.user.email,
-          createdAt: player.createdAt,
-        }));
+        const transformedPlayers: PlayerWithUserDetails[] = fetchedPlayers.map(
+          (player: any) => ({
+            id: player.id,
+            name: player.name,
+            email: player.user.email,
+            createdAt: player.user.createdAt,
+          })
+        );
 
         setPlayers(transformedPlayers);
         setUser(currentUser);
@@ -170,6 +172,7 @@ export default function AdminDashboard() {
               <tr>
                 <th className="text-left">Name</th>
                 <th className="text-left">Email</th>
+                <th className="text-left">Created At</th>
               </tr>
             </thead>
             <tbody>
@@ -177,6 +180,7 @@ export default function AdminDashboard() {
                 <tr key={player.id} className="border-t">
                   <td>{player.name}</td>
                   <td>{player.email}</td>
+                  <td>{player.createdAt.toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
