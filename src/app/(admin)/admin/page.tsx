@@ -40,6 +40,44 @@ export default function AdminDashboard() {
     return true;
   };
 
+  const handleEditPlayer = async (playerId: string) => {
+    try {
+      // Placeholder for edit functionality
+      toast.info(`Editing player with ID: ${playerId}`);
+      // Future implementation will likely involve:
+      // 1. Opening a modal or navigating to an edit page
+      // 2. Fetching current player details
+      // 3. Allowing user to modify player information
+    } catch (error) {
+      console.error("Error editing player:", error);
+      toast.error("Failed to edit player");
+    }
+  };
+
+  const handleDeletePlayer = async (playerId: string, playerName: string) => {
+    try {
+      // Show confirmation dialog
+      const confirmDelete = window.confirm(
+        `Are you sure you want to delete ${playerName}?`
+      );
+
+      if (!confirmDelete) return;
+
+      // Soft delete or actual deletion logic
+      await prisma.player.delete({
+        where: { id: playerId },
+      });
+
+      // Remove player from local state
+      setPlayers(players.filter((p) => p.id !== playerId));
+
+      toast.success(`Player ${playerName} deleted successfully`);
+    } catch (error) {
+      console.error("Error deleting player:", error);
+      toast.error("Failed to delete player");
+    }
+  };
+
   useEffect(() => {
     const checkUserAndFetchPlayers = async () => {
       try {
@@ -219,20 +257,16 @@ export default function AdminDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          // TODO: Implement edit player functionality
-                          toast.info(`Edit ${player.name}`);
-                        }}
+                        onClick={() => handleEditPlayer(player.id)}
                       >
                         Edit
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() => {
-                          // TODO: Implement delete player functionality
-                          toast.warning(`Delete ${player.name}`);
-                        }}
+                        onClick={() =>
+                          handleDeletePlayer(player.id, player.name)
+                        }
                       >
                         Delete
                       </Button>
