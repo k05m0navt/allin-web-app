@@ -7,40 +7,62 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      UserRole @default(PLAYER)
+  name      String
+  telegram  String?
+  createdAt DateTime @default(now())
+  
+  player    Player?
+}
+
+enum UserRole {
+  PLAYER
+  ADMIN
+}
+
 model Player {
-  id               String             @id @default(cuid())
-  name             String
-  email            String             @unique
-  telegram         String?
-  joinedAt         DateTime           @default(now())
-  tournaments      Tournament[]
-  statistics       PlayerStatistics?
-  TournamentResult TournamentResult[]
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  
+  tournaments PlayerTournament[]
+  statistics  PlayerStatistics?
 }
 
 model Tournament {
-  id       String             @id @default(cuid())
-  date     DateTime
-  location String
-  players  Player[]
-  results  TournamentResult[]
+  id          String   @id @default(cuid())
+  name        String
+  date        DateTime
+  location    String
+  description String?
+  
+  players     PlayerTournament[]
 }
 
-model TournamentResult {
-  id           String     @id @default(cuid())
-  player       Player     @relation(fields: [playerId], references: [id])
-  playerId     String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  tournamentId String
-  points       Int
-  rank         Int
+model PlayerTournament {
+  id            String     @id @default(cuid())
+  playerId      String
+  tournamentId  String
+  points        Int        @default(0)
+  rank          Int?
+  
+  player        Player     @relation(fields: [playerId], references: [id])
+  tournament    Tournament @relation(fields: [tournamentId], references: [id])
+  
+  @@unique([playerId, tournamentId])
 }
 
 model PlayerStatistics {
-  id               String @id @default(cuid())
-  player           Player @relation(fields: [playerId], references: [id])
-  playerId         String @unique
-  totalPoints      Int    @default(0)
-  totalTournaments Int    @default(0)
-  averageRank      Float  @default(0)
+  id                String  @id @default(cuid())
+  playerId          String  @unique
+  player            Player  @relation(fields: [playerId], references: [id])
+  
+  totalTournaments  Int     @default(0)
+  totalPoints       Int     @default(0)
+  averageRank       Float   @default(0)
+  bestRank          Int?
 }
