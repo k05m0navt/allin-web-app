@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { authService } from "@/lib/supabase";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -19,16 +19,16 @@ export default function LoginPage() {
 
     try {
       const { data, error } = await authService.signIn(email, password);
-
+      
       if (error) {
         setError(error.message);
         return;
       }
 
       // Redirect to admin dashboard on successful login
-      router.push("/admin");
+      router.push('/admin');
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     }
   };
 
@@ -40,21 +40,23 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="Email"
+            <Input 
+              type="email" 
+              placeholder="Email" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
+              required 
             />
-            <Input
-              type="password"
-              placeholder="Password"
+            <Input 
+              type="password" 
+              placeholder="Password" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
+              required 
             />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
             <Button type="submit" className="w-full">
               Login
             </Button>
