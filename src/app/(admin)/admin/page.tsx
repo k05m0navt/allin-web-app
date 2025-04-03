@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 
 interface PlayerWithUserDetails {
   id: string;
+  userId: string;
   name: string;
   email: string;
   createdAt: Date;
@@ -56,25 +57,51 @@ export default function AdminDashboard() {
 
   const handleDeletePlayer = async (playerId: string, playerName: string) => {
     try {
+      // Validate admin role before deletion
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user?.user_metadata?.role !== "ADMIN") {
+        toast.error("Unauthorized: Only admins can delete players");
+        return;
+      }
+
       // Show confirmation dialog
       const confirmDelete = window.confirm(
-        `Are you sure you want to delete ${playerName}?`
+        `Are you sure you want to delete ${playerName}? This action cannot be undone.`
       );
 
       if (!confirmDelete) return;
 
-      // Soft delete or actual deletion logic
+      // First, delete the associated Supabase user
+      const { error: authError } = await supabase.auth.admin.deleteUser(
+        playerId // Assuming playerId is the Supabase user ID
+      );
+
+      if (authError) {
+        toast.error(`Failed to delete user: ${authError.message}`);
+        return;
+      }
+
+      // Then delete the player record in Prisma
       await prisma.player.delete({
-        where: { id: playerId },
+        where: { userId: playerId },
       });
 
       // Remove player from local state
-      setPlayers(players.filter((p) => p.id !== playerId));
+      setPlayers(players.filter((p) => p.userId !== playerId));
 
       toast.success(`Player ${playerName} deleted successfully`);
     } catch (error) {
       console.error("Error deleting player:", error);
-      toast.error("Failed to delete player");
+
+      // Provide more detailed error feedback
+      if (error instanceof Error) {
+        toast.error(`Deletion failed: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred while deleting the player");
+      }
     }
   };
 
@@ -118,6 +145,7 @@ export default function AdminDashboard() {
         const transformedPlayers: PlayerWithUserDetails[] = fetchedPlayers.map(
           (player: any) => ({
             id: player.id,
+            userId: player.userId, // Ensure this is included
             name: player.name,
             email: player.user.email,
             createdAt: player.user.createdAt,
@@ -168,6 +196,7 @@ export default function AdminDashboard() {
       // Transform player data for the UI
       const playerWithUserDetails: PlayerWithUserDetails = {
         id: newPlayer.id,
+        userId: newPlayer.userId,
         name: newPlayer.name,
         email: newPlayer.user.email,
         createdAt: newPlayer.user.createdAt,
