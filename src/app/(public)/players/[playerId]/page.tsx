@@ -1,16 +1,11 @@
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 // Mock data - will be replaced with actual Prisma query
@@ -23,38 +18,58 @@ async function getPlayerProfile(playerId: string) {
       totalTournaments: 15,
       totalPoints: 250,
       averageRank: 2.7,
-      bestRank: 1
+      bestRank: 1,
+      worstRank: 10,
+      totalWins: 5,
+      totalLosses: 10,
+      winPercentage: 0.33,
+      longestWinStreak: 3,
+      longestLossStreak: 5,
     },
     tournamentHistory: [
-      { 
-        id: "1", 
-        name: "Summer Tournament", 
-        date: "2023-07-15", 
-        points: 30, 
-        rank: 2 
+      {
+        id: "1",
+        name: "Summer Tournament",
+        date: "2023-07-15",
+        points: 30,
+        rank: 2,
       },
-      { 
-        id: "2", 
-        name: "Winter Championship", 
-        date: "2023-12-20", 
-        points: 45, 
-        rank: 1 
-      }
-    ]
+      {
+        id: "2",
+        name: "Winter Championship",
+        date: "2023-12-20",
+        points: 45,
+        rank: 1,
+      },
+      {
+        id: "3",
+        name: "Spring Fling",
+        date: "2023-03-25",
+        points: 20,
+        rank: 5,
+      },
+      {
+        id: "4",
+        name: "Autumn Classic",
+        date: "2023-09-10",
+        points: 40,
+        rank: 3,
+      },
+    ],
   };
 }
 
-export default async function PlayerProfilePage({ 
-  params 
-}: { 
-  params: { playerId: string } 
+export default async function PlayerProfilePage({
+  params,
+}: {
+  params: { playerId: string };
 }) {
   const player = await getPlayerProfile(params.playerId);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">{player.name}'s Profile</h1>
-      
+
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -66,6 +81,15 @@ export default async function PlayerProfilePage({
               <p>Total Points: {player.statistics.totalPoints}</p>
               <p>Average Rank: {player.statistics.averageRank.toFixed(1)}</p>
               <p>Best Rank: {player.statistics.bestRank}</p>
+              <p>Worst Rank: {player.statistics.worstRank}</p>
+              <p>Total Wins: {player.statistics.totalWins}</p>
+              <p>Total Losses: {player.statistics.totalLosses}</p>
+              <p>
+                Win Percentage:{" "}
+                {(player.statistics.winPercentage * 100).toFixed(2)}%
+              </p>
+              <p>Longest Win Streak: {player.statistics.longestWinStreak}</p>
+              <p>Longest Loss Streak: {player.statistics.longestLossStreak}</p>
             </div>
           </CardContent>
         </Card>

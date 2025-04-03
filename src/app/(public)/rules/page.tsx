@@ -4,20 +4,23 @@ export default function RulesPage() {
   const rules = [
     {
       title: "Tournament Structure",
-      description: "Regular tournaments with fixed buy-in and prize pool distribution."
+      description:
+        "Regular tournaments with fixed buy-in and prize pool distribution.",
     },
     {
       title: "Scoring System",
-      description: "Points awarded based on tournament placement: 1st place gets 10 points, 2nd place 7 points, 3rd place 5 points, and so on."
+      description:
+        "Points awarded based on tournament placement: 1st place gets 10 points, 2nd place 7 points, 3rd place 5 points, and so on.",
     },
     {
       title: "Eligibility",
-      description: "Open to registered members. Players must be 18 or older."
+      description: "Open to registered members. Players must be 18 or older.",
     },
     {
       title: "Fair Play",
-      description: "Any form of cheating will result in immediate disqualification."
-    }
+      description:
+        "Any form of cheating will result in immediate disqualification.",
+    },
   ];
 
   return (
@@ -38,11 +41,12 @@ export default function RulesPage() {
       <div className="mt-8">
         <h2 className="text-2xl font-semibold mb-4">Join Our Community</h2>
         <p>
-          Want to learn more? Join our Telegram channel for latest updates and discussions!
-          <a 
-            href="https://t.me/allinpokerclub" 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          Want to learn more? Join our Telegram channel for latest updates and
+          discussions!
+          <a
+            href="https://t.me/allinpokerclub"
+            target="_blank"
+            rel="noopener noreferrer"
             className="ml-2 text-blue-600 hover:underline"
           >
             Telegram Channel

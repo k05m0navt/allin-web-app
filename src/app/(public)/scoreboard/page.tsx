@@ -1,29 +1,29 @@
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 async function getScoreboard() {
   // TODO: Replace with actual Prisma query
   return [
-    { 
-      rank: 1, 
-      name: "John Doe", 
-      totalPoints: 150, 
+    {
+      rank: 1,
+      name: "John Doe",
+      totalPoints: 150,
       tournaments: 10,
-      averageRank: 2.5 
+      averageRank: 2.5,
     },
-    { 
-      rank: 2, 
-      name: "Jane Smith", 
-      totalPoints: 120, 
+    {
+      rank: 2,
+      name: "Jane Smith",
+      totalPoints: 120,
       tournaments: 8,
-      averageRank: 3.0 
-    }
+      averageRank: 3.0,
+    },
   ];
 }
 
