@@ -8,9 +8,16 @@ import { Input } from "@/components/ui/input";
 import { authService, supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 
+interface PlayerWithUserDetails {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
-  const [players, setPlayers] = useState<any[]>([]);
+  const [players, setPlayers] = useState<PlayerWithUserDetails[]>([]);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerEmail, setNewPlayerEmail] = useState("");
   const router = useRouter();
@@ -38,18 +45,28 @@ export default function AdminDashboard() {
 
         // Fetch players from database
         const fetchedPlayers = await prisma.player.findMany({
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            createdAt: true,
+          include: {
+            user: {
+              select: {
+                email: true,
+                createdAt: true,
+              },
+            },
           },
           orderBy: {
             createdAt: "desc",
           },
         });
 
-        setPlayers(fetchedPlayers);
+        // Transform players to include user details
+        const transformedPlayers: PlayerWithUserDetails[] = fetchedPlayers.map((player: any) => ({
+          id: player.id,
+          name: player.name,
+          email: player.user.email,
+          createdAt: player.createdAt,
+        }));
+
+        setPlayers(transformedPlayers);
         setUser(currentUser);
       } catch (error) {
         console.error("Error checking user or fetching players:", error);
@@ -64,7 +81,7 @@ export default function AdminDashboard() {
     e.preventDefault();
 
     try {
-      // Create user in Supabase
+      // Create user in Supabase and Prisma
       const { data, error } = await authService.signUp(
         newPlayerEmail,
         "temporaryPassword123!",
@@ -76,16 +93,26 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Create player in Prisma
+      // Create player linked to the new user
       const newPlayer = await prisma.player.create({
         data: {
           name: newPlayerName,
-          email: newPlayerEmail,
-          supabaseId: data.user?.id,
+          userId: data.user?.id || "",
+        },
+        include: {
+          user: true,
         },
       });
 
-      setPlayers([...players, newPlayer]);
+      // Transform player data for the UI
+      const playerWithUserDetails: PlayerWithUserDetails = {
+        id: newPlayer.id,
+        name: newPlayer.name,
+        email: newPlayer.user.email,
+        createdAt: newPlayer.user.createdAt,
+      };
+
+      setPlayers([playerWithUserDetails, ...players]);
       setNewPlayerName("");
       setNewPlayerEmail("");
     } catch (error) {
