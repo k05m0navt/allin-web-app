@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Toaster } from "@/components/ui/sonner";
 import { authService, supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 
@@ -21,6 +23,22 @@ export default function AdminDashboard() {
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerEmail, setNewPlayerEmail] = useState("");
   const router = useRouter();
+
+  // Validation function
+  const validateForm = () => {
+    if (!newPlayerName.trim()) {
+      toast.error("Player name is required");
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newPlayerEmail)) {
+      toast.error("Invalid email address");
+      return false;
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     const checkUserAndFetchPlayers = async () => {
@@ -82,6 +100,9 @@ export default function AdminDashboard() {
   const handleAddPlayer = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate form before submission
+    if (!validateForm()) return;
+
     try {
       // Create user in Supabase and Prisma
       const { data, error } = await authService.signUp(
@@ -91,7 +112,7 @@ export default function AdminDashboard() {
       );
 
       if (error) {
-        console.error("Error creating user:", error);
+        toast.error(error.message || "Error creating user");
         return;
       }
 
@@ -117,8 +138,12 @@ export default function AdminDashboard() {
       setPlayers([playerWithUserDetails, ...players]);
       setNewPlayerName("");
       setNewPlayerEmail("");
+
+      // Show success toast
+      toast.success("Player added successfully");
     } catch (error) {
       console.error("Error adding player:", error);
+      toast.error("Failed to add player");
     }
   };
 
@@ -131,6 +156,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <Toaster richColors />
+
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
         <Button variant="destructive" onClick={handleLogout}>

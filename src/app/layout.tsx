@@ -5,6 +5,7 @@ import "./globals.css";
 import { MainNavigation } from "@/components/Navigation/main-navigation";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -13,11 +14,7 @@ export const metadata: Metadata = {
   description: "Poker tournament management and tracking platform",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -31,6 +28,7 @@ export default function RootLayout({
       <body className={cn(inter.className, "min-h-screen")}>
         <MainNavigation />
         <main>{children}</main>
+        <Toaster />
         <footer className="container mx-auto py-6 text-center">
           &copy; {new Date().getFullYear()} All In Poker Club
         </footer>
