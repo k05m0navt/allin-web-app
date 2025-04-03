@@ -5,17 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
+import { 
+  NavigationMenu, 
+  NavigationMenuItem, 
+  NavigationMenuList 
 } from "@/components/ui/navigation-menu";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/rules", label: "Rules" },
   { href: "/scoreboard", label: "Scoreboard" },
-  { href: "/calculator", label: "Points Calculator" },
+  { href: "/calculator", label: "Points Calculator" }
 ];
 
 export function MainNavigation() {
@@ -30,8 +30,8 @@ export function MainNavigation() {
         <NavigationMenuList className="flex space-x-4">
           {NAV_ITEMS.map((item) => (
             <NavigationMenuItem key={item.href}>
-              <Link
-                href={item.href}
+              <Link 
+                href={item.href} 
                 className={cn(
                   "text-gray-600 hover:text-black transition-colors",
                   pathname === item.href && "font-bold text-black"
