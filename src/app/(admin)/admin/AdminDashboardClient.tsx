@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabaseClient";
 
 interface PlayerWithDetails {
@@ -31,6 +32,8 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
   const [editTelegram, setEditTelegram] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [dbHealthy, setDbHealthy] = useState<boolean | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
   const router = useRouter();
 
   // DB Health Check
@@ -122,17 +125,56 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
   };
   const handleEditSave = async () => {
     if (!editPlayer) return;
-    setPlayers(players.map((p) =>
-      p.id === editPlayer.id ? { ...p, name: editName, telegram: editTelegram, phone: editPhone } : p
-    ));
-    toast.success("Player updated!");
-    closeEditDialog();
+    setEditLoading(true);
+    try {
+      const res = await fetch(`/api/players/${editPlayer.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName,
+          telegram: editTelegram,
+          phone: editPhone,
+        }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        toast.error(error || "Failed to update player in DB");
+        setEditLoading(false);
+        return;
+      }
+      const { player } = await res.json();
+      setPlayers(players.map((p) =>
+        p.id === player.id ? { ...p, name: player.name, telegram: player.telegram, phone: player.phone } : p
+      ));
+      toast.success("Player updated!");
+      closeEditDialog();
+    } catch {
+      toast.error("Failed to update player in DB");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   // Delete Player
   const handleDeletePlayer = async (playerId: string) => {
-    setPlayers(players.filter((p) => p.id !== playerId));
-    toast.success("Player deleted!");
+    setDeleteLoadingId(playerId);
+    try {
+      const res = await fetch(`/api/players/${playerId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        toast.error(error || "Failed to delete player from DB");
+        setDeleteLoadingId(null);
+        return;
+      }
+      setPlayers(players.filter((p) => p.id !== playerId));
+      toast.success("Player deleted!");
+    } catch {
+      toast.error("Failed to delete player from DB");
+    } finally {
+      setDeleteLoadingId(null);
+    }
   };
 
   // Logout (client-side only)
@@ -208,7 +250,7 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
         )}
         {withDbTooltip(
           <Input
-            placeholder="Telegram Username (@username)"
+            placeholder="Telegram Username"
             value={newPlayerTelegram}
             onChange={(e) => setNewPlayerTelegram(e.target.value)}
             disabled={dbHealthy === false}
@@ -217,7 +259,7 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
         )}
         {withDbTooltip(
           <Input
-            placeholder="Phone (+79267942414)"
+            placeholder="Phone"
             value={newPlayerPhone}
             onChange={(e) => setNewPlayerPhone(e.target.value)}
             disabled={dbHealthy === false}
@@ -235,10 +277,23 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
               <CardTitle className="truncate max-w-xs">{player.name}</CardTitle>
               <div className="flex gap-2 mt-2 sm:mt-0">
                 {withDbTooltip(
-                  <Button onClick={() => openEditDialog(player)} className="mr-2 px-3 py-1.5 text-sm" disabled={dbHealthy === false}>Edit</Button>
+                  <Button
+                    onClick={() => openEditDialog(player)}
+                    className="mr-2 px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:outline-none hover:bg-primary/90 active:scale-95"
+                    disabled={dbHealthy === false || !!deleteLoadingId}
+                  >
+                    {editPlayer?.id === player.id && editLoading ? <Skeleton className="h-5 w-10" /> : "Edit"}
+                  </Button>
                 )}
                 {withDbTooltip(
-                  <Button variant="destructive" onClick={() => handleDeletePlayer(player.id)} className="px-3 py-1.5 text-sm" disabled={dbHealthy === false}>Delete</Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeletePlayer(player.id)}
+                    className="px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none hover:bg-destructive/90 active:scale-95"
+                    disabled={dbHealthy === false || !!deleteLoadingId}
+                  >
+                    {deleteLoadingId === player.id ? <Skeleton className="h-5 w-14" /> : "Delete"}
+                  </Button>
                 )}
               </div>
             </CardHeader>
@@ -253,14 +308,14 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
       {/* Edit Dialog */}
       {editPlayer && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 px-2">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-auto">
+          <div className="bg-white dark:bg-zinc-900 dark:text-white rounded-lg p-6 w-full max-w-md mx-auto transition-colors duration-200">
             <h2 className="text-lg font-bold mb-2">Edit Player</h2>
             {withDbTooltip(
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 className="mb-2"
-                disabled={dbHealthy === false}
+                disabled={dbHealthy === false || editLoading}
               />
             )}
             {withDbTooltip(
@@ -268,7 +323,7 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
                 value={editTelegram}
                 onChange={(e) => setEditTelegram(e.target.value)}
                 className="mb-2"
-                disabled={dbHealthy === false}
+                disabled={dbHealthy === false || editLoading}
               />
             )}
             {withDbTooltip(
@@ -276,15 +331,17 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 className="mb-2"
-                disabled={dbHealthy === false}
+                disabled={dbHealthy === false || editLoading}
               />
             )}
             <div className="flex gap-2">
               {withDbTooltip(
-                <Button onClick={handleEditSave} disabled={dbHealthy === false}>Save</Button>
+                <Button onClick={handleEditSave} disabled={dbHealthy === false || editLoading}>
+                  {editLoading ? <Skeleton className="h-5 w-20" /> : "Save"}
+                </Button>
               )}
               {withDbTooltip(
-                <Button variant="outline" onClick={closeEditDialog} disabled={dbHealthy === false}>Cancel</Button>
+                <Button variant="outline" onClick={closeEditDialog} disabled={dbHealthy === false || editLoading}>Cancel</Button>
               )}
             </div>
           </div>

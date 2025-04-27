@@ -1,60 +1,36 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+// Removed 'use client' directive to make this a server component
 
-async function getScoreboard() {
-  // TODO: Replace with actual Prisma query
-  return [
-    {
-      rank: 1,
-      name: "John Doe",
-      totalPoints: 150,
-      tournaments: 10,
-      averageRank: 2.5,
-    },
-    {
-      rank: 2,
-      name: "Jane Smith",
-      totalPoints: 120,
-      tournaments: 8,
-      averageRank: 3.0,
-    },
-  ];
-}
+import { ScoreboardTable } from "@/components/Scoreboard/ScoreboardTable";
+import { prisma } from "@/lib/prisma";
 
 export default async function ScoreboardPage() {
-  const scoreboard = await getScoreboard();
+  // Fetch all players with their statistics (adjust as needed)
+  const scoreboard = await prisma.player.findMany({
+    // Example: include statistics or order as needed
+    include: {
+      statistics: true,
+    },
+    orderBy: [
+      { statistics: { totalPoints: "desc" } },
+      { statistics: { averageRank: "asc" } },
+      { name: "asc" },
+    ],
+  });
+
+  // Map to scoreboard data
+  const scoreboardData = scoreboard.map((p, i) => ({
+    id: p.id,
+    rank: i + 1,
+    name: p.name,
+    totalPoints: p.statistics?.totalPoints || 0,
+    tournaments: p.statistics?.totalTournaments || 0,
+    averageRank: p.statistics?.averageRank || 0,
+  }));
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Club Scoreboard</h1>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Rank</TableHead>
-            <TableHead>Player</TableHead>
-            <TableHead>Total Points</TableHead>
-            <TableHead>Tournaments</TableHead>
-            <TableHead>Average Rank</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {scoreboard.map((player) => (
-            <TableRow key={player.name}>
-              <TableCell>{player.rank}</TableCell>
-              <TableCell>{player.name}</TableCell>
-              <TableCell>{player.totalPoints}</TableCell>
-              <TableCell>{player.tournaments}</TableCell>
-              <TableCell>{player.averageRank.toFixed(1)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+    <div className="container mx-auto px-2 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Club Scoreboard</h1>
+      <ScoreboardTable players={scoreboardData} loading={false} />
     </div>
   );
 }

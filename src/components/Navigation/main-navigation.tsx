@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
@@ -17,11 +17,60 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Admin" }
 ];
 
+function DarkModeToggle() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    // On mount, check system and localStorage
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const stored = localStorage.getItem('theme');
+    if (stored === 'dark' || (!stored && prefersDark)) {
+      document.documentElement.classList.add('dark');
+      setDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setDark(false);
+    }
+  }, []);
+  const toggle = () => {
+    setDark((prev) => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
+  return (
+    <button
+      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      onClick={toggle}
+      className="ml-2 px-2 py-1 rounded border bg-muted hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-primary transition"
+    >
+      {dark ? "🌙" : "☀️"}
+    </button>
+  );
+}
+
 export function MainNavigation() {
   const session = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  // Detect dark mode for navbar
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    setIsDark(document.documentElement.classList.contains('dark'));
+    return () => observer.disconnect();
+  }, []);
 
   const handleLogout = async () => {
     const { error } = await import("@/lib/supabaseClient").then(({ supabase }) => supabase.auth.signOut());
@@ -31,7 +80,10 @@ export function MainNavigation() {
   };
 
   return (
-    <nav className="container mx-auto px-2 py-3 flex flex-wrap justify-between items-center bg-white shadow-sm rounded-b-lg">
+    <nav className={cn(
+      "container mx-auto px-2 py-3 flex flex-wrap justify-between items-center shadow-sm rounded-b-lg transition-colors",
+      isDark ? "bg-card" : "bg-white"
+    )}>
       <div className="flex items-center flex-shrink-0 mr-4">
         <Link href="/" className="text-2xl font-bold tracking-tight text-primary">
           All In Poker Club
@@ -47,8 +99,11 @@ export function MainNavigation() {
               <Link
                 href={item.href}
                 className={cn(
-                  "text-gray-600 hover:text-black transition-colors px-3 py-2 rounded-md hover:bg-gray-100 text-lg md:text-base block",
-                  pathname === item.href && "font-bold text-black bg-gray-100"
+                  isDark
+                    ? "text-gray-200 hover:text-white hover:bg-accent bg-transparent"
+                    : "text-gray-600 hover:text-black hover:bg-gray-100 bg-transparent",
+                  "transition-colors px-3 py-2 rounded-md text-lg md:text-base block",
+                  pathname === item.href && (isDark ? "font-bold text-white bg-accent" : "font-bold text-black bg-gray-100")
                 )}
                 onClick={() => setOpen(false)}
               >
@@ -65,6 +120,7 @@ export function MainNavigation() {
               <Link href="/admin">Admin Login</Link>
             </Button>
           )}
+          <DarkModeToggle />
         </div>
       </div>
     </nav>

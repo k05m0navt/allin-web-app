@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
@@ -37,9 +38,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-10 bg-white shadow-lg rounded-xl">
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-background transition-colors">
+      <div className="max-w-md w-full space-y-8 p-10 bg-card shadow-lg rounded-xl animate-fade-in transition-colors">
+        <h2 className="text-center text-3xl font-extrabold text-foreground">
           Admin Login
         </h2>
         <form onSubmit={handleLogin} className="mt-8 space-y-6">
@@ -59,13 +60,9 @@ export default function LoginPage() {
           />
           <Button type="submit" className="w-full" disabled={redirecting}>
             {redirecting ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                Redirecting...
-              </span>
+              <div className="flex items-center justify-center gap-2">
+                <Skeleton className="h-5 w-24 rounded" />
+              </div>
             ) : (
               "Login"
             )}

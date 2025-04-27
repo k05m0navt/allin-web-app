@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import SessionProvider from "@/components/SessionProvider";
-import { supabase } from "@/lib/supabaseClient";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
@@ -27,14 +27,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={cn(inter.className, "min-h-screen bg-background text-foreground")}>  
-        <SessionProvider>
-          <MainNavigation />
-          <main className="min-h-[80vh] pb-8 pt-2 px-2 sm:px-0">{children}</main>
-        </SessionProvider>
-        <Toaster />
-        <footer className="container mx-auto py-6 text-center text-xs text-muted-foreground px-2">
-          &copy; {new Date().getFullYear()} All In Poker Club
-        </footer>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SessionProvider>
+            <MainNavigation />
+            <main className="min-h-[80vh] pb-8 pt-2 px-2 sm:px-0">{children}</main>
+          </SessionProvider>
+          <Toaster />
+          <footer className="container mx-auto py-6 text-center text-xs text-muted-foreground px-2">
+            &copy; {new Date().getFullYear()} All In Poker Club
+          </footer>
+        </ThemeProvider>
       </body>
     </html>
   );
