@@ -1,6 +1,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
@@ -15,8 +16,6 @@ model User {
   name      String
   telegram  String?
   createdAt DateTime @default(now())
-  
-  player    Player?
 }
 
 enum UserRole {
@@ -27,13 +26,12 @@ enum UserRole {
 model Player {
   id        String   @id @default(cuid())
   name      String
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  
+  telegram  String
+  phone     String
+  createdAt DateTime @default(now())
+
   tournaments PlayerTournament[]
   statistics  PlayerStatistics?
-
-  createdAt DateTime @default(now())
 }
 
 model Tournament {
