@@ -11,9 +11,10 @@ import { useState, useEffect } from "react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/rules", label: "Rules" },
+  // { href: "/rules", label: "Rules" },
   { href: "/scoreboard", label: "Scoreboard" },
-  { href: "/calculator", label: "Points Calculator" },
+  {href: "/tournaments", label: "Tournaments"},
+  // { href: "/calculator", label: "Points Calculator" },
   { href: "/admin", label: "Admin" }
 ];
 

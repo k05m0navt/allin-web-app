@@ -1,5 +1,3 @@
-// Removed 'use client' directive to make this a server component
-
 import { ScoreboardTable } from "@/components/Scoreboard/ScoreboardTable";
 import { prisma } from "@/lib/prisma";
 

@@ -45,9 +45,15 @@ export async function PUT(req: NextRequest, { params }: { params: { playerId: st
   try {
     const body = await req.json();
     const { name, telegram, phone } = body;
+    if (!name || typeof name !== "string") {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+    const data: any = { name };
+    if (telegram !== undefined) data.telegram = telegram;
+    if (phone !== undefined) data.phone = phone;
     const updated = await prisma.player.update({
       where: { id: playerId },
-      data: { name, telegram, phone },
+      data,
     });
     return NextResponse.json({ player: updated });
   } catch (e) {

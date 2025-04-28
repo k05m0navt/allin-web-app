@@ -1,6 +1,12 @@
 import React from "react";
 
-export function Spinner({ size = 24, className = "" }: { size?: number; className?: string }) {
+export function Spinner({
+  size = 24,
+  className = "",
+}: {
+  size?: number;
+  className?: string;
+}) {
   return (
     <svg
       className={"animate-spin text-primary " + className}

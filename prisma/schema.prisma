@@ -26,8 +26,8 @@ enum UserRole {
 model Player {
   id        String   @id @default(cuid())
   name      String
-  telegram  String
-  phone     String
+  telegram  String?
+  phone     String?
   createdAt DateTime @default(now())
 
   tournaments PlayerTournament[]
