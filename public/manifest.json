@@ -1,0 +1,22 @@
+{
+  "name": "All In Poker Club",
+  "short_name": "Poker Club",
+  "description": "Poker tournament management and tracking platform.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#18181b",
+  "theme_color": "#18181b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/transparent_logo_dark.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/transparent_logo_dark.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
