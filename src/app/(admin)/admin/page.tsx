@@ -10,9 +10,17 @@ interface PlayerWithDetails {
   createdAt: string;
 }
 
+interface PrismaPlayer {
+  id: string;
+  name: string;
+  telegram: string | null;
+  phone: string | null;
+  createdAt: Date | string;
+}
+
 export default async function AdminDashboardPage() {
-  let session: any = null;
-  let dbUser: any = null;
+  let session: { access_token: string } | null = null;
+  let dbUser: { user_metadata?: { role?: string } } | null = null;
   let transformedPlayers: PlayerWithDetails[] = [];
   let dbError: string | null = null;
 
@@ -21,7 +29,6 @@ export default async function AdminDashboardPage() {
     // Use getSession for access_token, but getUser for secure user info
     const { data: sessionData } = await supabase.auth.getSession();
     session = sessionData.session;
-    let user = null;
     if (session?.access_token) {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError) throw userError;
@@ -32,18 +39,18 @@ export default async function AdminDashboardPage() {
       return <div>Unauthorized</div>;
     }
 
-    const fetchedPlayers = await prisma.player.findMany({
+    const fetchedPlayers: PrismaPlayer[] = await prisma.player.findMany({
       orderBy: { createdAt: "desc" },
     });
 
-    transformedPlayers = fetchedPlayers.map((player: any) => ({
+    transformedPlayers = fetchedPlayers.map((player) => ({
       id: player.id,
       name: player.name,
-      telegram: player.telegram,
-      phone: player.phone,
-      createdAt: player.createdAt.toISOString(),
+      telegram: player.telegram ?? "",
+      phone: player.phone ?? "",
+      createdAt: player.createdAt instanceof Date ? player.createdAt.toISOString() : String(player.createdAt),
     }));
-  } catch (error) {
+  } catch (error: unknown) {
     dbError = (error instanceof Error ? error.message : "Unknown error");
   }
 

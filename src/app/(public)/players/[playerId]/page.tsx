@@ -9,48 +9,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { prisma } from "@/lib/prisma";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useState, useEffect, use } from "react";
 
-async function getPlayerProfile(playerId: string) {
-  // Real Prisma query for player profile, statistics, and tournament history
-  const player = await prisma.player.findUnique({
-    where: { id: playerId },
-    include: {
-      statistics: true,
-      tournaments: {
-        include: {
-          tournament: true,
-        },
-        orderBy: [{ tournament: { date: "desc" } }],
-      },
-    },
-  });
-  if (!player) return null;
-  return {
-    id: player.id,
-    name: player.name,
-    statistics: {
-      totalTournaments: player.statistics?.totalTournaments ?? 0,
-      totalPoints: player.statistics?.totalPoints ?? 0,
-      averageRank: player.statistics?.averageRank ?? 0,
-      bestRank: player.statistics?.bestRank ?? null,
-      worstRank: player.statistics && 'worstRank' in player.statistics ? player.statistics.worstRank : null,
-    },
-    tournamentHistory: player.tournaments.map((pt) => ({
-      id: pt.tournament.id,
-      name: pt.tournament.name,
-      date: pt.tournament.date.toISOString().slice(0, 10),
-      points: pt.points,
-      rank: pt.rank,
-    })),
-  };
+interface PlayerStatistics {
+  totalTournaments: number;
+  totalPoints: number;
+  averageRank: number;
+  bestRank: number | null;
+  worstRank: number | null;
+}
+interface TournamentHistoryItem {
+  id: string;
+  name: string;
+  date: string;
+  points: number;
+  rank: number | null;
+}
+interface PlayerProfile {
+  id: string;
+  name: string;
+  statistics: PlayerStatistics;
+  tournamentHistory: TournamentHistoryItem[];
 }
 
 export default function PlayerProfilePageWrapper({ params }: { params: Promise<{ playerId: string }> }) {
   const { playerId } = use(params);
-  const [player, setPlayer] = useState<any>(null);
+  const [player, setPlayer] = useState<PlayerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,11 +47,11 @@ export default function PlayerProfilePageWrapper({ params }: { params: Promise<{
         if (!res.ok) throw new Error("Player not found");
         return res.json();
       })
-      .then((data) => {
+      .then((data: PlayerProfile) => {
         setPlayer(data);
         setLoading(false);
       })
-      .catch((err) => {
+      .catch((err: Error) => {
         setError(err.message);
         setLoading(false);
       });
@@ -122,13 +107,13 @@ export default function PlayerProfilePageWrapper({ params }: { params: Promise<{
     );
   }
   // Render the actual profile page
-  return <PlayerProfilePage player={player} />;
+  return player ? <PlayerProfilePage player={player} /> : null;
 }
 
-function PlayerProfilePage({ player }: { player: any }) {
+function PlayerProfilePage({ player }: { player: PlayerProfile }) {
   return (
     <div className="container mx-auto px-2 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center animate-fade-in">{player.name}'s Profile</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center animate-fade-in">{player.name}&apos;s Profile</h1>
       <div className="grid md:grid-cols-2 gap-6">
         <Card className="transition-shadow duration-300 hover:shadow-lg focus-within:shadow-lg">
           <CardHeader>
@@ -169,7 +154,7 @@ function PlayerProfilePage({ player }: { player: any }) {
                       <TableCell colSpan={4} className="text-center text-muted-foreground">No tournaments played yet.</TableCell>
                     </TableRow>
                   ) : (
-                    player.tournamentHistory.map((tournament: any) => (
+                    player.tournamentHistory.map((tournament) => (
                       <TableRow key={tournament.id} tabIndex={0} className="focus:bg-accent/40">
                         <TableCell>{tournament.name}</TableCell>
                         <TableCell>{tournament.date}</TableCell>

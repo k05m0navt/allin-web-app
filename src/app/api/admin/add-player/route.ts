@@ -10,6 +10,13 @@ async function isDbHealthy() {
   }
 }
 
+// Explicit type for player creation
+interface PlayerCreateData {
+  name: string;
+  telegram?: string;
+  phone?: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Check DB health before proceeding
@@ -22,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
     // Create player only (no user)
-    const data: any = { name };
+    const data: PlayerCreateData = { name };
     if (telegram !== undefined) data.telegram = telegram;
     if (phone !== undefined) data.phone = phone;
     const player = await prisma.player.create({

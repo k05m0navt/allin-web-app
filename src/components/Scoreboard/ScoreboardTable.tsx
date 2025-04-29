@@ -1,9 +1,16 @@
 "use client";
+
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { ScoreboardPagination } from "./ScoreboardPagination";
 import { Skeleton } from "@/components/ui/Skeleton";
 
@@ -51,10 +58,14 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
           : b.averageRank - a.averageRank;
       }
       if (sortBy === "totalPoints") {
-        return sortDir === "asc" ? a.totalPoints - b.totalPoints : b.totalPoints - a.totalPoints;
+        return sortDir === "asc"
+          ? a.totalPoints - b.totalPoints
+          : b.totalPoints - a.totalPoints;
       }
       if (sortBy === "tournaments") {
-        return sortDir === "asc" ? a.tournaments - b.tournaments : b.tournaments - a.tournaments;
+        return sortDir === "asc"
+          ? a.tournaments - b.tournaments
+          : b.tournaments - a.tournaments;
       }
       return 0;
     });
@@ -94,7 +105,9 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
           aria-label="Search player by name"
         />
         <div className="flex gap-2 items-center">
-          <label htmlFor="sortBy" className="text-sm text-muted-foreground">Sort by:</label>
+          <label htmlFor="sortBy" className="text-sm text-muted-foreground">
+            Sort by:
+          </label>
           <select
             id="sortBy"
             className="border rounded px-2 py-1 text-sm"
@@ -105,7 +118,9 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
             }}
           >
             {sortOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <button
@@ -132,16 +147,30 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
             <div className="flex items-center gap-3">
               {/* Avatar removed as requested */}
               <div>
-                <Link href={`/players/${player.id}`} className="font-semibold text-primary underline hover:text-primary/80 text-lg">
+                <Link
+                  href={`/players/${player.id}`}
+                  className="font-semibold text-primary underline hover:text-primary/80 text-lg"
+                >
                   {player.name}
                 </Link>
-                <div className="text-xs text-muted-foreground">Rank #{player.rank}</div>
+                <div className="text-xs text-muted-foreground">
+                  Rank #{player.rank}
+                </div>
               </div>
             </div>
             <div className="flex gap-4 text-sm mt-1">
-              <div><span className="font-medium">Points:</span> {player.totalPoints}</div>
-              <div><span className="font-medium">Tourn.:</span> {player.tournaments}</div>
-              <div><span className="font-medium">Avg Rank:</span> {player.averageRank.toFixed(1)}</div>
+              <div>
+                <span className="font-medium">Points:</span>{" "}
+                {player.totalPoints}
+              </div>
+              <div>
+                <span className="font-medium">Tourn.:</span>{" "}
+                {player.tournaments}
+              </div>
+              <div>
+                <span className="font-medium">Avg Rank:</span>{" "}
+                {player.averageRank.toFixed(1)}
+              </div>
             </div>
           </div>
         ))}
@@ -160,10 +189,16 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
           </TableHeader>
           <TableBody>
             {paginatedPlayers.map((player) => (
-              <TableRow key={player.id} className="hover:bg-accent/30 focus-within:bg-accent/40">
+              <TableRow
+                key={player.id}
+                className="hover:bg-accent/30 focus-within:bg-accent/40"
+              >
                 <TableCell className="font-semibold">{player.rank}</TableCell>
                 <TableCell>
-                  <Link href={`/players/${player.id}`} className="text-primary underline hover:text-primary/80">
+                  <Link
+                    href={`/players/${player.id}`}
+                    className="text-primary underline hover:text-primary/80"
+                  >
                     {/* Avatar removed as requested */}
                     {player.name}
                   </Link>

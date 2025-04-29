@@ -1,5 +1,3 @@
-"use server";
-
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -8,7 +6,7 @@ export async function PUT(req: NextRequest, { params }: { params: { tournamentId
   try {
     const { name, date, location, description } = await req.json();
     if (!name || !date || !location) {
-      return NextResponse.json({ error: "Name, date, and location are required" }, { status: 400 });
+      return NextResponse.json({ error: "Name, date, and location are required." }, { status: 400 });
     }
     const updated = await prisma.tournament.update({
       where: { id: tournamentId },
@@ -20,8 +18,8 @@ export async function PUT(req: NextRequest, { params }: { params: { tournamentId
       },
     });
     return NextResponse.json({ tournament: updated });
-  } catch (e) {
-    return NextResponse.json({ error: "Failed to update tournament" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to update tournament." }, { status: 500 });
   }
 }
 
@@ -30,7 +28,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { tournamen
   try {
     await prisma.tournament.delete({ where: { id: tournamentId } });
     return NextResponse.json({ success: true });
-  } catch (e) {
-    return NextResponse.json({ error: "Failed to delete tournament" }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete tournament." }, { status: 500 });
   }
 }

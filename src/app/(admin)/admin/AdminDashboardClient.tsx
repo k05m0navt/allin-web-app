@@ -1,12 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { supabase } from "@/lib/supabaseClient";
 
 interface PlayerWithDetails {
   id: string;
@@ -17,14 +15,22 @@ interface PlayerWithDetails {
 }
 
 interface AdminDashboardClientProps {
-  session: any;
+  session: unknown;
   players: PlayerWithDetails[];
   dbError?: string | null;
 }
 
+interface Tournament {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  description?: string | null;
+}
+
 const TABS = ["Players", "Tournaments"];
 
-export default function AdminDashboardClient({ session, players: initialPlayers, dbError }: AdminDashboardClientProps) {
+export default function AdminDashboardClient({ players: initialPlayers, dbError }: AdminDashboardClientProps) {
   const [players, setPlayers] = useState<PlayerWithDetails[]>(initialPlayers || []);
   const [newPlayerName, setNewPlayerName] = useState("");
   const [newPlayerTelegram, setNewPlayerTelegram] = useState("");
@@ -36,7 +42,6 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
   const [dbHealthy, setDbHealthy] = useState<boolean | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
-  const router = useRouter();
 
   // DB Health Check
   const checkDbHealth = useCallback(async () => {
@@ -179,45 +184,15 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
     }
   };
 
-  // Logout (client-side only)
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-  };
-
-  // Banner for DB downtime
-  const dbBanner = dbHealthy === false ? (
-    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 flex items-center" role="alert">
-      <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" />
-      </svg>
-      <span className="font-semibold">Database is unavailable.</span>
-      <span className="ml-2">All player management actions are temporarily disabled. Please wait or contact support if this persists.</span>
-    </div>
-  ) : null;
-
-  // Tooltip helper for disabled actions
-  const withDbTooltip = (element: React.ReactNode) =>
-    dbHealthy === false ? (
-      <span className="group relative inline-block">
-        {element}
-        <span className="absolute z-10 left-1/2 -translate-x-1/2 mt-2 w-max px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          Database unavailable
-        </span>
-      </span>
-    ) : (
-      <>{element}</>
-    );
-
   // Tournament state
   const [activeTab, setActiveTab] = useState(0);
-  const [tournaments, setTournaments] = useState<any[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [newTournamentName, setNewTournamentName] = useState("");
   const [newTournamentDate, setNewTournamentDate] = useState("");
   const [newTournamentLocation, setNewTournamentLocation] = useState("");
   const [newTournamentDescription, setNewTournamentDescription] = useState("");
   const [tournamentLoading, setTournamentLoading] = useState(false);
-  const [editTournament, setEditTournament] = useState<any | null>(null);
+  const [editTournament, setEditTournament] = useState<Tournament | null>(null);
   const [editTournamentLoading, setEditTournamentLoading] = useState(false);
   const [deleteTournamentLoadingId, setDeleteTournamentLoadingId] = useState<string | null>(null);
 
@@ -262,7 +237,7 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
     toast.success("Tournament added!");
   };
 
-  const openEditTournament = (t: any) => {
+  const openEditTournament = (t: Tournament) => {
     setEditTournament(t);
   };
   const closeEditTournament = () => {
@@ -304,6 +279,30 @@ export default function AdminDashboardClient({ session, players: initialPlayers,
     setTournaments(tournaments.filter((t) => t.id !== id));
     toast.success("Tournament deleted!");
   };
+
+  // Banner for DB downtime
+  const dbBanner = dbHealthy === false ? (
+    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4 flex items-center" role="alert">
+      <svg className="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0Z" />
+      </svg>
+      <span className="font-semibold">Database is unavailable.</span>
+      <span className="ml-2">All player management actions are temporarily disabled. Please wait or contact support if this persists.</span>
+    </div>
+  ) : null;
+
+  // Tooltip helper for disabled actions
+  const withDbTooltip = (element: React.ReactNode) =>
+    dbHealthy === false ? (
+      <span className="group relative inline-block">
+        {element}
+        <span className="absolute z-10 left-1/2 -translate-x-1/2 mt-2 w-max px-2 py-1 rounded bg-black text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          Database unavailable
+        </span>
+      </span>
+    ) : (
+      <>{element}</>
+    );
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">

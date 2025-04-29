@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest, { params }: { params: { playerId: string } }) {
+// Explicit type for player update
+interface PlayerUpdateData {
+  name: string;
+  telegram?: string;
+  phone?: string;
+}
+
+export async function GET({ params }: { params: { playerId: string } }) {
   const { playerId } = await params;
   try {
     const player = await prisma.player.findUnique({
@@ -25,7 +32,10 @@ export async function GET(req: NextRequest, { params }: { params: { playerId: st
         totalPoints: player.statistics?.totalPoints ?? 0,
         averageRank: player.statistics?.averageRank ?? 0,
         bestRank: player.statistics?.bestRank ?? null,
-        worstRank: player.statistics && "worstRank" in player.statistics ? player.statistics.worstRank : null,
+        worstRank:
+          player.statistics && "worstRank" in player.statistics
+            ? player.statistics.worstRank
+            : null,
       },
       tournamentHistory: player.tournaments.map((pt) => ({
         id: pt.tournament.id,
@@ -35,12 +45,15 @@ export async function GET(req: NextRequest, { params }: { params: { playerId: st
         rank: pt.rank,
       })),
     });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { playerId: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { playerId: string } }
+) {
   const { playerId } = await params;
   try {
     const body = await req.json();
@@ -48,7 +61,7 @@ export async function PUT(req: NextRequest, { params }: { params: { playerId: st
     if (!name || typeof name !== "string") {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
-    const data: any = { name };
+    const data: PlayerUpdateData = { name };
     if (telegram !== undefined) data.telegram = telegram;
     if (phone !== undefined) data.phone = phone;
     const updated = await prisma.player.update({
@@ -56,12 +69,18 @@ export async function PUT(req: NextRequest, { params }: { params: { playerId: st
       data,
     });
     return NextResponse.json({ player: updated });
-  } catch (e) {
-    return NextResponse.json({ error: "Failed to update player" }, { status: 500 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to update player" },
+      { status: 500 }
+    );
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { playerId: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { playerId: string } }
+) {
   const { playerId } = await params;
   try {
     // Defensive: delete statistics first (1:1), then participations (1:N), then player
@@ -69,9 +88,15 @@ export async function DELETE(req: NextRequest, { params }: { params: { playerId:
     await prisma.playerTournament.deleteMany({ where: { playerId } });
     await prisma.player.delete({ where: { id: playerId } });
     return NextResponse.json({ success: true });
-  } catch (e) {
+  } catch (error) {
     // Log error for debugging
-    console.error("Failed to delete player:", e);
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Failed to delete player" }, { status: 500 });
+    console.error("Failed to delete player:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete player",
+      },
+      { status: 500 }
+    );
   }
 }

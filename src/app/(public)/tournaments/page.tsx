@@ -1,10 +1,25 @@
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface Tournament {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  description?: string | null;
+}
+
 export default async function TournamentsPage() {
-  const tournaments = await prisma.tournament.findMany({
+  const tournamentsRaw = await prisma.tournament.findMany({
     orderBy: { date: "desc" }
   });
+  const tournaments: Tournament[] = tournamentsRaw.map((t) => ({
+    id: t.id,
+    name: t.name,
+    date: t.date instanceof Date ? t.date.toISOString() : t.date,
+    location: t.location,
+    description: t.description ?? null,
+  }));
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -15,7 +30,7 @@ export default async function TournamentsPage() {
             No tournaments found.
           </div>
         )}
-        {tournaments.map((tournament: any) => (
+        {tournaments.map((tournament) => (
           <Card key={tournament.id} className="w-full">
             <CardHeader>
               <CardTitle>{tournament.name}</CardTitle>

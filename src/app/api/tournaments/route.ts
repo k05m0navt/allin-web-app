@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const tournaments = await prisma.tournament.findMany({
       orderBy: { date: "desc" },
     });
     return NextResponse.json({ tournaments });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to fetch tournaments" }, { status: 500 });
   }
 }
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json({ tournament });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to create tournament" }, { status: 500 });
   }
 }
