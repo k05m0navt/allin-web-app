@@ -10,6 +10,8 @@ interface Tournament {
   description?: string | null;
 }
 
+export const revalidate = 60;
+
 export default async function TournamentsPage() {
   const tournamentsRaw = await prisma.tournament.findMany({
     orderBy: { date: "desc" }

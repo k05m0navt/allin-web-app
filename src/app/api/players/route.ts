@@ -8,7 +8,11 @@ export async function GET() {
       select: { id: true, name: true, telegram: true, phone: true },
       orderBy: { name: "asc" },
     });
-    return NextResponse.json({ players });
+    return NextResponse.json({ players }, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=60'
+      }
+    });
   } catch {
     return NextResponse.json(
       { error: "Failed to fetch players." },

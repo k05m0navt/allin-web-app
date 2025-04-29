@@ -1,6 +1,8 @@
 import { ScoreboardTable } from "@/components/Scoreboard/ScoreboardTable";
 import { prisma } from "@/lib/prisma";
 
+export const revalidate = 60;
+
 export default async function ScoreboardPage() {
   // Fetch all players with their statistics (adjust as needed)
   const scoreboard = await prisma.player.findMany({

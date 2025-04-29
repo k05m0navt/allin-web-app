@@ -14,11 +14,16 @@ export async function GET() {
           .aggregate({ _sum: { points: true } })
           .then((r) => r._sum.points ?? 0),
       ]);
-    return NextResponse.json({
+    const statistics = {
       totalPlayers,
       totalTournaments,
       totalReentries,
       totalPoints,
+    };
+    return NextResponse.json(statistics, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=60'
+      }
     });
   } catch {
     return NextResponse.json(

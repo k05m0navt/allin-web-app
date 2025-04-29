@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
@@ -57,10 +58,19 @@ function DarkModeToggle({ fullWidth = false }: { fullWidth?: boolean }) {
 
 export function MainNavigation() {
   const session = useSession();
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   // Focus trap and Esc close for mobile drawer
   useEffect(() => {
@@ -96,6 +106,44 @@ export function MainNavigation() {
     return () => drawer.removeEventListener("keydown", handleKey);
   }, [menuOpen]);
 
+  // Show skeleton until mounted on client
+  if (!mounted) {
+    return (
+      <nav className="w-full px-4 py-2 flex items-center justify-between shadow-sm bg-background sticky top-0 z-50">
+        <Skeleton className="h-10 w-36 rounded" />
+        <div className="flex gap-4 flex-1 justify-center">
+          <Skeleton className="h-8 w-20 rounded" />
+          <Skeleton className="h-8 w-24 rounded" />
+          <Skeleton className="h-8 w-28 rounded" />
+          <Skeleton className="h-8 w-24 rounded" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
+      </nav>
+    );
+  }
+
+  // Show skeleton if session is undefined (loading)
+  if (typeof session === "undefined") {
+    return (
+      <nav className="w-full px-4 py-2 flex items-center justify-between shadow-sm bg-background sticky top-0 z-50">
+        <Skeleton className="h-10 w-36 rounded" />
+        <div className="flex gap-4 flex-1 justify-center">
+          <Skeleton className="h-8 w-20 rounded" />
+          <Skeleton className="h-8 w-24 rounded" />
+          <Skeleton className="h-8 w-28 rounded" />
+          <Skeleton className="h-8 w-24 rounded" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-10 w-10 rounded-full" />
+        </div>
+      </nav>
+    );
+  }
+
   const handleLogout = async () => {
     const { error } = await import("@/lib/supabaseClient").then(
       ({ supabase }) => supabase.auth.signOut()
@@ -105,12 +153,8 @@ export function MainNavigation() {
     }
   };
 
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
   return (
-    <nav className="w-full px-4 py-2 flex items-center justify-between shadow-sm bg-background sticky top-0 z-30">
+    <nav className="w-full px-4 py-2 flex items-center justify-between shadow-sm bg-background sticky top-0 z-50">
       <Link href="/" className="flex items-center gap-2 select-none" aria-label="Home">
         <span className="relative w-36 h-10">
           <Image
@@ -167,7 +211,7 @@ export function MainNavigation() {
         </div>
         {/* Hamburger menu button on the right for mobile */}
         <button
-          className="md:hidden flex items-center justify-center rounded p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[44px] min-w-[44px]"
+          className="md:hidden flex items-center justify-center rounded p-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary min-h-[44px] min-w-[44px] pointer-events-auto"
           aria-label="Open menu"
           onClick={() => setMenuOpen(true)}
         >

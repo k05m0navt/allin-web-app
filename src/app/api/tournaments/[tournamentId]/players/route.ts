@@ -194,3 +194,27 @@ export async function PATCH(
     );
   }
 }
+
+// Get all players in a tournament
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { tournamentId: string } }
+) {
+  const { tournamentId } = await params;
+  try {
+    const players = await prisma.playerTournament.findMany({
+      where: { tournamentId },
+      include: { player: true },
+    });
+    return NextResponse.json({ players }, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, stale-while-revalidate=60'
+      }
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to get players." },
+      { status: 500 }
+    );
+  }
+}
