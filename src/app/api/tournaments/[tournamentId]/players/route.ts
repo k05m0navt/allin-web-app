@@ -5,9 +5,9 @@ import { getUserFromRequest } from "@/lib/getUserFromRequest";
 // Add a player to a tournament
 export async function POST(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   const user = await getUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -45,9 +45,9 @@ export async function POST(
 // Remove a player from a tournament
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   const user = await getUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -75,9 +75,9 @@ export async function DELETE(
 // Update a player's place, bounty, and points in a tournament
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   const user = await getUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -198,9 +198,9 @@ export async function PATCH(
 // Get all players in a tournament
 export async function GET(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   try {
     const players = await prisma.playerTournament.findMany({
       where: { tournamentId },

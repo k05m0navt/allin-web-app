@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   try {
     // Use PlayerTournament join table to fetch players for this tournament
     const tournament = await prisma.tournament.findUnique({
@@ -67,9 +67,9 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { tournamentId: string } }
+  context: { params: Promise<{ tournamentId: string }> }
 ) {
-  const { tournamentId } = await params;
+  const { tournamentId } = await context.params;
   // You may want to check admin auth here (if you have a getUserFromRequest helper)
   // Example:
   // const user = await getUserFromRequest(req);
