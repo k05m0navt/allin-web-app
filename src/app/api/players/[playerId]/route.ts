@@ -8,7 +8,10 @@ interface PlayerUpdateData {
   phone?: string;
 }
 
-export async function GET({ params }: { params: { playerId: string } }) {
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { playerId: string } }
+) {
   const { playerId } = await params;
   try {
     const player = await prisma.player.findUnique({
@@ -43,6 +46,7 @@ export async function GET({ params }: { params: { playerId: string } }) {
         date: pt.tournament.date.toISOString().slice(0, 10),
         points: pt.points,
         rank: pt.rank,
+        reentries: pt.reentries ?? 0,
       })),
     });
   } catch {
@@ -54,7 +58,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { playerId: string } }
 ) {
-  const { playerId } = await params;
+  const { playerId } = params;
   try {
     const body = await req.json();
     const { name, telegram, phone } = body;
@@ -81,7 +85,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: { playerId: string } }
 ) {
-  const { playerId } = await params;
+  const { playerId } = params;
   try {
     // Defensive: delete statistics first (1:1), then participations (1:N), then player
     await prisma.playerStatistics.deleteMany({ where: { playerId } });

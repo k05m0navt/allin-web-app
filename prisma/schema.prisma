@@ -50,6 +50,8 @@ model PlayerTournament {
   tournamentId  String
   points        Int        @default(0)
   rank          Int?
+  bounty        Int?       @default(0)
+  reentries     Int        @default(1)
   
   player        Player     @relation(fields: [playerId], references: [id])
   tournament    Tournament @relation(fields: [tournamentId], references: [id])
@@ -66,4 +68,5 @@ model PlayerStatistics {
   totalPoints       Int     @default(0)
   averageRank       Float   @default(0)
   bestRank          Int?
+  bounty            Int     @default(0)
 }

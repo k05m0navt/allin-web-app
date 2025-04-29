@@ -20,6 +20,7 @@ export interface ScoreboardPlayer {
   name: string;
   totalPoints: number;
   tournaments: number;
+  bounty: number;
   averageRank: number;
 }
 
@@ -33,6 +34,7 @@ const sortOptions = [
   { label: "Tournaments", value: "tournaments" },
   { label: "Average Rank", value: "averageRank" },
   { label: "Name", value: "name" },
+  { label: "Bounty", value: "bounty" },
 ];
 
 export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
@@ -67,6 +69,16 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
           ? a.tournaments - b.tournaments
           : b.tournaments - a.tournaments;
       }
+      if (sortBy === "rank") {
+        return sortDir === "asc"
+          ? a.rank - b.rank
+          : b.rank - a.rank;
+      }
+      if (sortBy === "bounty") {
+        return sortDir === "asc"
+          ? a.bounty - b.bounty
+          : b.bounty - a.bounty;
+      }
       return 0;
     });
     return filtered;
@@ -76,6 +88,12 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
     const start = (page - 1) * perPage;
     return filteredPlayers.slice(start, start + perPage);
   }, [filteredPlayers, page, perPage]);
+
+  // Map sortDir to aria-sort values
+  function getAriaSort(col: string, sortBy: string, sortDir: "asc" | "desc") {
+    if (col !== sortBy) return "none";
+    return sortDir === "asc" ? "ascending" : "descending";
+  }
 
   // Responsive rendering is now handled purely by CSS (Tailwind's sm:hidden/sm:block)
   // Removed isMobile JS check to avoid SSR/CSR mismatch
@@ -168,6 +186,10 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
                 {player.tournaments}
               </div>
               <div>
+                <span className="font-medium">Bounty:</span>{" "}
+                {player.bounty}
+              </div>
+              <div>
                 <span className="font-medium">Avg Rank:</span>{" "}
                 {player.averageRank.toFixed(1)}
               </div>
@@ -180,11 +202,120 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
         <Table className="min-w-full text-sm">
           <TableHeader>
             <TableRow>
-              <TableHead>Rank</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead>Total Points</TableHead>
-              <TableHead>Tournaments</TableHead>
-              <TableHead>Average Rank</TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("rank");
+                  setSortDir(sortBy === "rank" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("rank", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("rank");
+                    setSortDir(sortBy === "rank" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Rank {sortBy === "rank" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("name");
+                  setSortDir(sortBy === "name" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("name", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("name");
+                    setSortDir(sortBy === "name" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Player {sortBy === "name" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("totalPoints");
+                  setSortDir(sortBy === "totalPoints" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("totalPoints", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("totalPoints");
+                    setSortDir(sortBy === "totalPoints" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Total Points {sortBy === "totalPoints" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("tournaments");
+                  setSortDir(sortBy === "tournaments" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("tournaments", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("tournaments");
+                    setSortDir(sortBy === "tournaments" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Tournaments {sortBy === "tournaments" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("bounty");
+                  setSortDir(sortBy === "bounty" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("bounty", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("bounty");
+                    setSortDir(sortBy === "bounty" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Bounty {sortBy === "bounty" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() => {
+                  setSortBy("averageRank");
+                  setSortDir(sortBy === "averageRank" && sortDir === "asc" ? "desc" : "asc");
+                  setPage(1);
+                }}
+                aria-sort={getAriaSort("averageRank", sortBy, sortDir)}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    setSortBy("averageRank");
+                    setSortDir(sortBy === "averageRank" && sortDir === "asc" ? "desc" : "asc");
+                    setPage(1);
+                  }
+                }}
+              >
+                Average Rank {sortBy === "averageRank" && (sortDir === "asc" ? "▲" : "▼")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -205,6 +336,7 @@ export function ScoreboardTable({ players, loading }: ScoreboardTableProps) {
                 </TableCell>
                 <TableCell>{player.totalPoints}</TableCell>
                 <TableCell>{player.tournaments}</TableCell>
+                <TableCell>{player.bounty}</TableCell>
                 <TableCell>{player.averageRank.toFixed(1)}</TableCell>
               </TableRow>
             ))}

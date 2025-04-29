@@ -32,8 +32,8 @@ export default function HomePage() {
           <Button asChild>
             <Link href="/scoreboard">View Scoreboard</Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link href="/rules">Club Rules</Link>
+          <Button asChild>
+            <Link href="/tournaments">View Tournaments</Link>
           </Button>
         </div>
       </section>
@@ -49,16 +49,6 @@ export default function HomePage() {
             </CardContent>
           </Card>
         ))}
-      </section>
-
-      <section className="mt-16 text-center">
-        <h2 className="text-3xl font-semibold mb-6">Join Our Community</h2>
-        <p className="text-gray-600 mb-8">
-          Connect with fellow poker enthusiasts and track your progress
-        </p>
-        <Button asChild size="lg">
-          <Link href="/calculator">Calculate Your Points</Link>
-        </Button>
       </section>
     </div>
   );

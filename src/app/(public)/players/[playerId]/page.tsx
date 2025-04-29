@@ -25,6 +25,7 @@ interface TournamentHistoryItem {
   date: string;
   points: number;
   rank: number | null;
+  reentries?: number;
 }
 interface PlayerProfile {
   id: string;
@@ -111,15 +112,22 @@ export default function PlayerProfilePageWrapper({ params }: { params: Promise<{
 }
 
 function PlayerProfilePage({ player }: { player: PlayerProfile }) {
+  // Calculate total reentries
+  const totalReentries = player.tournamentHistory.reduce((sum, t) => sum + (t.reentries ?? 0), 0);
   return (
     <div className="container mx-auto px-2 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center animate-fade-in">{player.name}&apos;s Profile</h1>
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="transition-shadow duration-300 hover:shadow-lg focus-within:shadow-lg">
-          <CardHeader>
-            <CardTitle>Player Statistics</CardTitle>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Card className="w-full border-2 border-transparent hover:border-primary/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 transition-shadow duration-300 hover:shadow-xl focus-within:shadow-lg group">
+          <CardHeader className="flex flex-row items-center gap-4 pb-2">
+            <div className="flex-1">
+              <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors truncate">
+                Player Statistics
+              </CardTitle>
+            </div>
+            <span className="w-5 h-5 text-muted-foreground mr-1" role="img" aria-label="statistics">📊</span>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-2 pt-0">
             <div className="space-y-2 text-sm">
               <p><span className="font-medium">Total Tournaments:</span> {player.statistics.totalTournaments}</p>
               <p><span className="font-medium">Total Points:</span> {player.statistics.totalPoints}</p>
@@ -130,36 +138,55 @@ function PlayerProfilePage({ player }: { player: PlayerProfile }) {
               {typeof player.statistics.worstRank === "number" && player.statistics.worstRank !== null ? (
                 <p><span className="font-medium">Worst Rank:</span> {player.statistics.worstRank}</p>
               ) : null}
+              <p><span className="font-medium">Total Re-entries:</span> {totalReentries}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="transition-shadow duration-300 hover:shadow-lg focus-within:shadow-lg">
-          <CardHeader>
-            <CardTitle>Tournament History</CardTitle>
+        <Card className="w-full border-2 border-transparent hover:border-primary/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 transition-shadow duration-300 hover:shadow-xl focus-within:shadow-lg group">
+          <CardHeader className="flex flex-row items-center gap-4 pb-2">
+            <div className="flex-1">
+              <CardTitle className="text-xl font-semibold group-hover:text-primary transition-colors truncate">
+                Tournament History
+              </CardTitle>
+            </div>
+            <span className="w-5 h-5 text-muted-foreground mr-1" role="img" aria-label="trophy">🏆</span>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+          <CardContent className="flex flex-col gap-2 pt-0">
+            <div className="overflow-x-auto w-full">
               <Table className="min-w-full text-sm animate-fade-in">
-                <TableHeader>
+                <TableHeader className="hidden md:table-header-group">
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Rank</TableHead>
+                    <TableHead>Re-entries</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {player.tournamentHistory.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground">No tournaments played yet.</TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">No tournaments played yet.</TableCell>
                     </TableRow>
                   ) : (
                     player.tournamentHistory.map((tournament) => (
-                      <TableRow key={tournament.id} tabIndex={0} className="focus:bg-accent/40">
-                        <TableCell>{tournament.name}</TableCell>
-                        <TableCell>{tournament.date}</TableCell>
-                        <TableCell>{tournament.points}</TableCell>
-                        <TableCell>{tournament.rank ?? '-'}</TableCell>
+                      <TableRow key={tournament.id} tabIndex={0} className="focus:bg-accent/40 flex flex-col md:table-row border-b md:border-0">
+                        {/* Mobile stacked view */}
+                        <TableCell className="block md:table-cell font-semibold md:font-normal md:pl-2 md:pr-2">
+                          <span className="md:hidden text-xs text-muted-foreground">Name: </span>{tournament.name}
+                        </TableCell>
+                        <TableCell className="block md:table-cell md:pl-2 md:pr-2">
+                          <span className="md:hidden text-xs text-muted-foreground">Date: </span>{tournament.date}
+                        </TableCell>
+                        <TableCell className="block md:table-cell md:pl-2 md:pr-2">
+                          <span className="md:hidden text-xs text-muted-foreground">Points: </span>{tournament.points}
+                        </TableCell>
+                        <TableCell className="block md:table-cell md:pl-2 md:pr-2">
+                          <span className="md:hidden text-xs text-muted-foreground">Rank: </span>{tournament.rank ?? '-'}
+                        </TableCell>
+                        <TableCell className="block md:table-cell md:pl-2 md:pr-2">
+                          <span className="md:hidden text-xs text-muted-foreground">Re-entries: </span>{tournament.reentries ?? 0}
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
