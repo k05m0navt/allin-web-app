@@ -10,9 +10,9 @@ interface PlayerUpdateData {
 
 export async function GET(
   req: NextRequest,
-  context: { params: { playerId: string } }
+  context: { params: Promise<{ playerId: string }> }
 ) {
-  const { playerId } = context.params;
+  const { playerId } = await context.params;
   try {
     const player = await prisma.player.findUnique({
       where: { id: playerId },
