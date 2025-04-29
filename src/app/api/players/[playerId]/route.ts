@@ -8,9 +8,14 @@ interface PlayerUpdateData {
   phone?: string;
 }
 
+// Custom context type for Next.js dynamic route params
+interface RouteContext {
+  params: { playerId: string };
+}
+
 export async function GET(
   req: NextRequest,
-  context: { params: { playerId: string } }
+  context: RouteContext
 ) {
   const { playerId } = context.params;
   try {
@@ -56,7 +61,7 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: RouteContext
 ) {
   const { playerId } = params;
   try {
@@ -83,7 +88,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { playerId: string } }
+  { params }: RouteContext
 ) {
   const { playerId } = params;
   try {
