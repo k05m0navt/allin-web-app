@@ -8,14 +8,9 @@ interface PlayerUpdateData {
   phone?: string;
 }
 
-// Custom context type for Next.js dynamic route params
-interface RouteContext {
-  params: { playerId: string };
-}
-
 export async function GET(
   req: NextRequest,
-  context: RouteContext
+  context: { params: { playerId: string } }
 ) {
   const { playerId } = context.params;
   try {
@@ -61,9 +56,9 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  { params }: RouteContext
+  context: { params: { playerId: string } }
 ) {
-  const { playerId } = params;
+  const { playerId } = context.params;
   try {
     const body = await req.json();
     const { name, telegram, phone } = body;
@@ -88,9 +83,9 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: RouteContext
+  context: { params: { playerId: string } }
 ) {
-  const { playerId } = params;
+  const { playerId } = context.params;
   try {
     // Defensive: delete statistics first (1:1), then participations (1:N), then player
     await prisma.playerStatistics.deleteMany({ where: { playerId } });
