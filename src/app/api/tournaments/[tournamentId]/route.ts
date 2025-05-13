@@ -65,6 +65,30 @@ export async function GET(
   }
 }
 
+export async function PUT(
+  req: NextRequest,
+  context: { params: Promise<{ tournamentId: string }> }
+) {
+  const { tournamentId } = await context.params;
+  const data = await req.json();
+
+  try {
+    const updated = await prisma.tournament.update({
+      where: { id: tournamentId },
+      data,
+    });
+    return NextResponse.json({ tournament: updated });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: "Failed to update tournament",
+        details: error instanceof Error ? error.message : error,
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   context: { params: Promise<{ tournamentId: string }> }
