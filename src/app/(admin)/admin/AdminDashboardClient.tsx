@@ -354,15 +354,15 @@ export default function AdminDashboardClient({
         </div>
       </div>
       <div className="mb-6">
-        <nav className="flex rounded-lg bg-muted p-1 w-full sm:w-fit sm:mx-auto shadow-sm border border-muted-foreground/10 overflow-x-auto sm:overflow-x-visible whitespace-nowrap sm:whitespace-normal scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+        <nav className="flex rounded-lg bg-muted p-1 w-full sm:w-fit sm:mx-auto shadow-sm border border-muted-foreground/10 overflow-x-auto sm:overflow-x-visible whitespace-nowrap sm:whitespace-normal scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent relative">
           {TABS.map((tab, idx) => (
             <button
               key={tab}
               className={cn(
-                "px-5 py-2 text-base font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                "relative px-5 py-2 text-base font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
                 activeTab === idx
-                  ? "bg-primary text-white shadow"
-                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                  ? "bg-primary text-white shadow dark:bg-primary/80 dark:text-white"
+                  : "text-muted-foreground hover:bg-accent/60 hover:text-foreground bg-transparent"
               )}
               onClick={() => setActiveTab(idx)}
               tabIndex={0}

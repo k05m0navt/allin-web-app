@@ -275,8 +275,7 @@ export default function AdminPlayerTable() {
               <CardContent className="flex flex-row items-center gap-4 pt-4 pb-4">
                 <Checkbox
                   checked={selectedIds.includes(player.id)}
-                  onCheckedChange={e => {
-                    e?.stopPropagation();
+                  onCheckedChange={() => {
                     toggleSelect(player.id);
                   }}
                   aria-label={`Select player ${player.name}`}
