@@ -51,11 +51,18 @@ export default function AdminPlayerTable() {
     setLoading(true);
     fetch(`/api/players?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`)
       .then((res) => res.json())
-      .then((data) => {
-        setPlayers(data.players || []);
-        setPage(data.page || 1);
-        setTotalPages(data.totalPages || 1);
-        setTotal(data.total || (data.players?.length || 0) * (data.totalPages || 1));
+      .then((result) => {
+        if (result.success && result.data) {
+          setPlayers(result.data.players || []);
+          setPage(result.data.page || 1);
+          setTotalPages(result.data.totalPages || 1);
+          setTotal(result.data.total || (result.data.players?.length || 0) * (result.data.totalPages || 1));
+        } else {
+          setPlayers([]);
+          setPage(1);
+          setTotalPages(1);
+          setTotal(0);
+        }
       })
       .finally(() => setLoading(false));
   }, [page, search]);

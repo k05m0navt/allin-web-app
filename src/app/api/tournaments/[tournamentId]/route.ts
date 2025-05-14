@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getOrCreateUserFromRequest } from "@/lib/getUserFromRequest";
+import { z } from "zod";
 
 export async function GET(
   req: NextRequest,
@@ -13,10 +14,7 @@ export async function GET(
       where: { id: tournamentId },
     });
     if (!tournament) {
-      return NextResponse.json(
-        { error: "Tournament not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Tournament not found" }, { status: 404 });
     }
     // Find all PlayerTournament records for this tournament, join Player
     const playerTournaments = await prisma.playerTournament.findMany({
@@ -46,23 +44,24 @@ export async function GET(
       reentries: pt.reentries ?? 0,
     }));
     return NextResponse.json({
-      tournament: {
-        id: tournament.id,
-        name: tournament.name,
-        date:
-          tournament.date instanceof Date
-            ? tournament.date.toISOString()
-            : tournament.date,
-        location: tournament.location,
-        description: tournament.description,
-        players,
+      success: true,
+      data: {
+        tournament: {
+          id: tournament.id,
+          name: tournament.name,
+          date:
+            tournament.date instanceof Date
+              ? tournament.date.toISOString()
+              : tournament.date,
+          location: tournament.location,
+          description: tournament.description,
+          players,
+        },
       },
     });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch tournament." },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("GET /api/tournaments/[tournamentId] error:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch tournament." }, { status: 500 });
   }
 }
 
@@ -75,7 +74,24 @@ export async function PUT(
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
-  const data = await req.json();
+  let json;
+  try {
+    json = await req.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+  }
+  // Validate input with zod
+  const TournamentUpdateSchema = z.object({
+    name: z.string().min(1, "Name is required").optional(),
+    date: z.string().optional(),
+    location: z.string().optional(),
+    description: z.string().optional(),
+  });
+  const parseResult = TournamentUpdateSchema.safeParse(json);
+  if (!parseResult.success) {
+    return NextResponse.json({ success: false, error: parseResult.error.errors.map(e => e.message).join(", ") }, { status: 400 });
+  }
+  const data = parseResult.data;
 
   try {
     const oldTournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
@@ -92,15 +108,10 @@ export async function PUT(
         details: { old: oldTournament, new: updated },
       },
     });
-    return NextResponse.json({ tournament: updated });
+    return NextResponse.json({ success: true, data: { tournament: updated } });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Failed to update tournament",
-        details: error instanceof Error ? error.message : error,
-      },
-      { status: 500 }
-    );
+    console.error("PUT /api/tournaments/[tournamentId] error:", error);
+    return NextResponse.json({ success: false, error: "Failed to update tournament" }, { status: 500 });
   }
 }
 
@@ -179,10 +190,8 @@ export async function DELETE(
       });
     }
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to delete tournament." },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("DELETE /api/tournaments/[tournamentId] error:", error);
+    return NextResponse.json({ success: false, error: "Failed to delete tournament." }, { status: 500 });
   }
 }

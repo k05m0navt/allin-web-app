@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUserFromRequest, getOrCreateUserFromRequest } from "@/lib/getUserFromRequest";
+import { z } from "zod";
 
 export async function GET(req: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
       : undefined;
     const [tournaments, total] = await Promise.all([
       prisma.tournament.findMany({
-      orderBy: { date: "desc" },
+        orderBy: { date: "desc" },
         where,
         skip,
         take: limit,
@@ -27,11 +28,15 @@ export async function GET(req: NextRequest) {
       prisma.tournament.count({ where }),
     ]);
     return NextResponse.json({
-      tournaments,
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+      success: true,
+      data: {
+        tournaments,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      error: null
     }, {
       headers: {
         'Cache-Control': 'public, max-age=60, stale-while-revalidate=60'
@@ -39,20 +44,35 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("GET /api/tournaments error:", error);
-    return NextResponse.json({ error: "Failed to fetch tournaments" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to fetch tournaments" }, { status: 500 });
   }
 }
+
+const TournamentCreateSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  date: z.string().min(1, "Date is required"),
+  location: z.string().min(1, "Location is required"),
+  description: z.string().optional(),
+});
+type TournamentCreateData = z.infer<typeof TournamentCreateSchema>;
 
 export async function POST(req: NextRequest) {
   const user = await getOrCreateUserFromRequest();
   if (!user || user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
   }
   try {
-    const { name, date, location, description } = await req.json();
-    if (!name || !date || !location) {
-      return NextResponse.json({ error: "Name, date, and location are required" }, { status: 400 });
+    let json;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
     }
+    const parseResult = TournamentCreateSchema.safeParse(json);
+    if (!parseResult.success) {
+      return NextResponse.json({ success: false, error: parseResult.error.errors.map(e => e.message).join(", ") }, { status: 400 });
+    }
+    const { name, date, location, description } = parseResult.data;
     const tournament = await prisma.tournament.create({
       data: {
         name,
@@ -70,9 +90,9 @@ export async function POST(req: NextRequest) {
         details: { created: tournament },
       },
     });
-    return NextResponse.json({ tournament });
+    return NextResponse.json({ success: true, data: { tournament } });
   } catch (error) {
     console.error("POST /api/tournaments error:", error);
-    return NextResponse.json({ error: "Failed to create tournament" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to create tournament" }, { status: 500 });
   }
 }

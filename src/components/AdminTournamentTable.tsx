@@ -51,11 +51,18 @@ const AdminTournamentTable = () => {
     setLoading(true);
     fetch(`/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`)
       .then((res) => res.json())
-      .then((data) => {
-        setTournaments(data.tournaments || []);
-        setPage(data.page || 1);
-        setTotalPages(data.totalPages || 1);
-        setTotal(data.total || (data.tournaments?.length || 0) * (data.totalPages || 1));
+      .then((result) => {
+        if (result.success && result.data) {
+          setTournaments(result.data.tournaments || []);
+          setPage(result.data.page || 1);
+          setTotalPages(result.data.totalPages || 1);
+          setTotal(result.data.total || (result.data.tournaments?.length || 0) * (result.data.totalPages || 1));
+        } else {
+          setTournaments([]);
+          setPage(1);
+          setTotalPages(1);
+          setTotal(0);
+        }
       })
       .finally(() => setLoading(false));
   }, [page, search]);
@@ -87,15 +94,20 @@ const AdminTournamentTable = () => {
       closeEditDialog();
       setLoading(true);
       setTournaments([]);
-      fetch(`/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setTournaments(data.tournaments || []);
-          setPage(data.page || 1);
-          setTotalPages(data.totalPages || 1);
-          setTotal(data.total || (data.tournaments?.length || 0) * (data.totalPages || 1));
-        })
-        .finally(() => setLoading(false));
+      const response = await fetch(`/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`);
+      const result = await response.json();
+      if (result.success && result.data) {
+        setTournaments(result.data.tournaments || []);
+        setPage(result.data.page || 1);
+        setTotalPages(result.data.totalPages || 1);
+        setTotal(result.data.total || (result.data.tournaments?.length || 0) * (result.data.totalPages || 1));
+      } else {
+        setTournaments([]);
+        setPage(1);
+        setTotalPages(1);
+        setTotal(0);
+      }
+      setLoading(false);
     } finally {
       setEditLoading(false);
     }
@@ -234,106 +246,114 @@ const AdminTournamentTable = () => {
             aria-label="Search tournaments"
           />
         </div>
-        {loading ? (
-          Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="w-full">
-              <CardHeader>
-                <Skeleton className="h-6 w-36 mb-2 rounded" />
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-28 rounded" />
-                  <Skeleton className="h-4 w-32 rounded" />
-                  <Skeleton className="h-4 w-24 rounded" />
-                  <Skeleton className="h-4 w-20 rounded" />
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          tournaments.map((t) => (
-            <Card
-              key={t.id}
-              className={cn(
-                "w-full cursor-pointer hover:shadow-xl transition-shadow border-2 border-transparent hover:border-primary/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 group",
-                selectedIds.includes(t.id) ? "ring-2 ring-primary/40 bg-primary/5" : ""
-              )}
-              tabIndex={0}
-              onClick={e => {
-                if ((e.target as HTMLElement).closest('button, [data-slot="checkbox"]')) return;
-                toggleSelect(t.id);
-              }}
-            >
-              <CardContent className="flex flex-row items-center gap-4 pt-4 pb-4">
-                <Checkbox
-                  checked={selectedIds.includes(t.id)}
-                  onCheckedChange={() => toggleSelect(t.id)}
-                  aria-label={`Select tournament ${t.name}`}
-                  className="size-5 flex-shrink-0"
-                  id={`tournament-checkbox-${t.id}`}
-                />
-                <div className="flex-1 flex flex-col gap-2">
-                  <div className="flex flex-row items-center gap-4 pb-2">
-                    <div className="flex-1">
-                      <span className="text-xl font-semibold group-hover:text-primary transition-colors truncate">
-                        {t.name}
-                      </span>
+        <div>
+          {loading ? (
+            <div>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Card key={i} className="w-full">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-36 mb-2 rounded" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-28 rounded" />
+                      <Skeleton className="h-4 w-32 rounded" />
+                      <Skeleton className="h-4 w-24 rounded" />
+                      <Skeleton className="h-4 w-20 rounded" />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="w-4 h-4" role="img" aria-label="location">📍</span>
-                    <span className="truncate">{t.location || '-'}</span>
-                  </div>
-                  {t.description && (
-                    <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 text-sm mt-1">
-                      <span className="w-4 h-4 flex-shrink0" role="img" aria-label="description">📝</span>
-                      <span className="truncate">{t.description}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="w-4 h-4" role="img" aria-label="date">📅</span>
-                    <span className="truncate">
-                      {t.date && !isNaN(new Date(t.date).getTime())
-                        ? new Date(t.date).toISOString().slice(0, 10)
-                        : "-"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 ml-4 w-28 max-w-[120px] justify-center">
-                  <Button
-                    onClick={e => {
-                      e.stopPropagation();
-                      openEditDialog(t);
-                    }}
-                    className="w-full px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:outline-none hover:bg-primary/90 active:scale-95"
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setConfirmDeleteId(t.id);
-                    }}
-                    className="w-full px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none hover:bg-destructive/90 active:scale-95"
-                    disabled={deleteLoadingId === t.id}
-                  >
-                    {deleteLoadingId === t.id ? (
-                      <Skeleton className="h-5 w-14" />
-                    ) : (
-                      "Delete"
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            tournaments.length > 0 ? (
+              <div>
+                {tournaments.map((t) => (
+                  <Card
+                    key={t.id}
+                    className={cn(
+                      // Match player card gradient, border, and hover
+                      "w-full cursor-pointer hover:shadow-xl transition-shadow border-2 border-transparent hover:border-primary/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 group",
+                      selectedIds.includes(t.id) ? "ring-2 ring-primary/40 bg-primary/5" : ""
                     )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-        {!loading && tournaments.length === 0 && (
-          <div className="text-center text-muted-foreground mt-8 text-base">
-            No tournaments found.
-          </div>
-        )}
+                    tabIndex={0}
+                    onClick={e => {
+                      if ((e.target as HTMLElement).closest('button, [data-slot=\"checkbox\"]')) return;
+                      toggleSelect(t.id);
+                    }}
+                  >
+                    <CardContent className="flex flex-row items-center gap-4 pt-4 pb-4">
+                      <Checkbox
+                        checked={selectedIds.includes(t.id)}
+                        onCheckedChange={() => toggleSelect(t.id)}
+                        aria-label={`Select tournament ${t.name}`}
+                        className="size-5 flex-shrink-0"
+                        id={`tournament-checkbox-${t.id}`}
+                      />
+                      <div className="flex-1 flex flex-col gap-2">
+                        <div className="flex flex-row items-center gap-4 pb-2">
+                          <div className="flex-1">
+                            <span className="text-xl font-semibold group-hover:text-primary transition-colors truncate">
+                              {t.name}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="w-4 h-4" role="img" aria-label="location">📍</span>
+                          <span className="truncate">{t.location || '-'}</span>
+                        </div>
+                        {t.description && (
+                          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300 text-sm mt-1">
+                            <span className="w-4 h-4 flex-shrink0" role="img" aria-label="description">📝</span>
+                            <span className="truncate">{t.description}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="w-4 h-4" role="img" aria-label="date">📅</span>
+                          <span className="truncate">
+                            {t.date && !isNaN(new Date(t.date).getTime())
+                              ? new Date(t.date).toISOString().slice(0, 10)
+                              : "-"}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-4 w-28 max-w-[120px] justify-center">
+                        <Button
+                          onClick={e => {
+                            e.stopPropagation();
+                            openEditDialog(t);
+                          }}
+                          className="w-full px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:outline-none hover:bg-primary/90 active:scale-95"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={e => {
+                            e.stopPropagation();
+                            setConfirmDeleteId(t.id);
+                          }}
+                          className="w-full px-3 py-1.5 text-sm transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:outline-none hover:bg-destructive/90 active:scale-95"
+                          disabled={deleteLoadingId === t.id}
+                        >
+                          {deleteLoadingId === t.id ? (
+                            <Skeleton className="h-5 w-14" />
+                          ) : (
+                            "Delete"
+                          )}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground mt-8 text-base">
+                No tournaments found.
+              </div>
+            )
+          )}
+        </div>
       </div>
       <ScoreboardPagination
         total={total}

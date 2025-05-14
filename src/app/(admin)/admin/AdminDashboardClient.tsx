@@ -247,35 +247,35 @@ export default function AdminDashboardClient({
   // Statistics state
   const [statistics, setStatistics] = useState<ClubStatistics | null>(null);
   useEffect(() => {
-      fetch("/api/statistics")
-        .then((res) => res.json())
-        .then((data) => {
-          if (
-            typeof data.totalPlayers === "number" &&
-            typeof data.totalTournaments === "number" &&
-            typeof data.totalReentries === "number" &&
-            typeof data.totalPoints === "number"
-          ) {
-            setStatistics(data);
-          } else {
-            setStatistics({
-              totalPlayers: 0,
-              totalTournaments: 0,
-              totalReentries: 0,
-              totalPoints: 0,
-              error: data.error || "Failed to load statistics",
-            });
-          }
-        })
-        .catch(() =>
+    fetch("/api/statistics")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data &&
+          typeof data.data.totalPlayers === "number" &&
+          typeof data.data.totalTournaments === "number" &&
+          typeof data.data.totalReentries === "number" &&
+          typeof data.data.totalPoints === "number"
+        ) {
+          setStatistics(data.data);
+        } else {
           setStatistics({
             totalPlayers: 0,
             totalTournaments: 0,
             totalReentries: 0,
             totalPoints: 0,
-            error: "Failed to load statistics",
-          })
-        );
+            error: data.error || "Failed to load statistics",
+          });
+        }
+      })
+      .catch(() =>
+        setStatistics({
+          totalPlayers: 0,
+          totalTournaments: 0,
+          totalReentries: 0,
+          totalPoints: 0,
+          error: "Failed to load statistics",
+        })
+      );
   }, []);
 
   // Banner for DB downtime
@@ -353,13 +353,22 @@ export default function AdminDashboardClient({
           </span>
         </div>
       </div>
-      <div className="mb-6">
-        <nav className="flex rounded-lg bg-muted p-1 w-full sm:w-fit sm:mx-auto shadow-sm border border-muted-foreground/10 overflow-x-auto sm:overflow-x-visible whitespace-nowrap sm:whitespace-normal scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent relative">
+      <div className="mb-6 w-full relative">
+        {/* Left fade for scroll cue (mobile only) */}
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-6 z-10 bg-gradient-to-r from-muted to-transparent sm:hidden" />
+        {/* Right fade for scroll cue (mobile only) */}
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-6 z-10 bg-gradient-to-l from-muted to-transparent sm:hidden" />
+        <nav
+          className="flex flex-row items-center gap-2 sm:gap-4 rounded-lg bg-muted p-1 w-full mx-auto shadow-sm border border-muted-foreground/10 overflow-x-auto sm:overflow-x-visible whitespace-nowrap scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent relative sm:justify-center"
+          aria-label="Admin dashboard tabs"
+          style={{ WebkitOverflowScrolling: 'touch', scrollbarGutter: 'stable' }}
+        >
           {TABS.map((tab, idx) => (
             <button
               key={tab}
               className={cn(
-                "relative px-5 py-2 text-base font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                "px-4 sm:px-6 py-2 text-sm sm:text-base font-semibold rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 min-w-[120px] sm:min-w-[140px] truncate text-ellipsis",
+                "sm:flex-1",
                 activeTab === idx
                   ? "bg-primary text-white shadow dark:bg-primary/80 dark:text-white"
                   : "text-muted-foreground hover:bg-accent/60 hover:text-foreground bg-transparent"
@@ -367,7 +376,6 @@ export default function AdminDashboardClient({
               onClick={() => setActiveTab(idx)}
               tabIndex={0}
               type="button"
-              style={{ minWidth: 120 }}
             >
               {tab}
             </button>

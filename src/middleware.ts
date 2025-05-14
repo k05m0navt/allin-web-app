@@ -5,7 +5,8 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 
 export async function middleware(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // Use getUser for secure, authenticated user info
+  const { data: { user }, error } = await supabase.auth.getUser();
 
   // Check if the path requires admin authentication
   const adminPaths = ["/admin"];
@@ -14,13 +15,13 @@ export async function middleware(req: NextRequest) {
   );
 
   if (isAdminPath) {
-    // If no session exists, redirect to login
-    if (!session) {
+    // If no user exists or error, redirect to login
+    if (!user || error) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
     // Check for admin role
-    const userRole = session.user?.user_metadata?.role;
+    const userRole = user.user_metadata?.role || user.role;
     if (userRole !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url));
     }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
 
 export async function GET() {
   try {
@@ -20,15 +21,13 @@ export async function GET() {
       totalReentries,
       totalPoints,
     };
-    return NextResponse.json(statistics, {
+    return NextResponse.json({ success: true, data: statistics }, {
       headers: {
         'Cache-Control': 'public, max-age=60, stale-while-revalidate=60'
       }
     });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch statistics." },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("GET /api/statistics error:", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch statistics." }, { status: 500 });
   }
 }
