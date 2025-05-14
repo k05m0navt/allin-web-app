@@ -34,7 +34,8 @@ export async function POST(
       data: { playerId, tournamentId },
     });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("POST /api/tournaments/[tournamentId]/players error:", error);
     return NextResponse.json(
       { error: "Failed to add player." },
       { status: 500 }
@@ -55,16 +56,14 @@ export async function DELETE(
   try {
     const { playerId } = await req.json();
     if (!playerId) {
-      return NextResponse.json(
-        { error: "Player ID is required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Player ID is required." }, { status: 400 });
     }
-    await prisma.playerTournament.deleteMany({
-      where: { playerId, tournamentId },
+    await prisma.playerTournament.delete({
+      where: { playerId_tournamentId: { playerId, tournamentId } },
     });
     return NextResponse.json({ success: true });
-  } catch {
+  } catch (error) {
+    console.error("DELETE /api/tournaments/[tournamentId]/players error:", error);
     return NextResponse.json(
       { error: "Failed to remove player." },
       { status: 500 }
@@ -83,111 +82,23 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   try {
-    const { playerId, points, rank, bounty, reentries } = await req.json();
+    const { playerId, rank, points, bounty, reentries } = await req.json();
     if (!playerId) {
-      return NextResponse.json(
-        { error: "Player ID is required." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Player ID is required." }, { status: 400 });
     }
-    const updateData: Record<string, number | null> = {};
-    if (typeof points === "number") updateData.points = points;
-    if (typeof rank === "number") updateData.rank = rank;
-    if (typeof bounty === "number" || bounty === null)
-      updateData.bounty = bounty;
-    if (typeof reentries === "number" || reentries === null)
-      updateData.reentries = reentries;
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json(
-        { error: "No fields to update." },
-        { status: 400 }
-      );
-    }
-    // Debug: check if playerTournament exists before update
-    const exists = await prisma.playerTournament.findUnique({
+    const update: any = {};
+    if (rank !== undefined) update.rank = rank;
+    if (points !== undefined) update.points = points;
+    if (bounty !== undefined) update.bounty = bounty;
+    if (reentries !== undefined) update.reentries = reentries;
+    const updated = await prisma.playerTournament.update({
       where: { playerId_tournamentId: { playerId, tournamentId } },
+      data: update,
     });
-    if (!exists) {
-      return NextResponse.json(
-        { error: "PlayerTournament not found (pre-check)." },
-        { status: 404 }
-      );
-    }
-    await prisma.playerTournament.update({
-      where: { playerId_tournamentId: { playerId, tournamentId } },
-      data: updateData,
-    });
-
-    // After any update, recalculate and persist points for all ranked players in the tournament
-    const allPTs = await prisma.playerTournament.findMany({
-      where: { tournamentId },
-    });
-    const ranked = allPTs
-      .filter((pt) => pt.rank != null)
-      .sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
-    const n = ranked.length;
-    for (let idx = 0; idx < n; idx++) {
-      const pt = ranked[idx];
-      const newPoints = n - idx;
-      if (pt.points !== newPoints) {
-        await prisma.playerTournament.update({
-          where: {
-            playerId_tournamentId: { playerId: pt.playerId, tournamentId },
-          },
-          data: { points: newPoints },
-        });
-      }
-    }
-
-    // --- Update PlayerStatistics for all affected players ---
-    // Get all unique playerIds in this tournament
-    const playerIds = Array.from(new Set(allPTs.map((pt) => pt.playerId)));
-    for (const pid of playerIds) {
-      const participations = await prisma.playerTournament.findMany({
-        where: { playerId: pid },
-      });
-      const totalTournaments = participations.length;
-      const totalPoints = participations.reduce(
-        (sum, pt) => sum + (pt.points ?? 0),
-        0
-      );
-      const totalBounty = participations.reduce(
-        (sum, pt) => sum + (pt.bounty ?? 0),
-        0
-      );
-      const rankedEntries = participations.filter((pt) => pt.rank != null);
-      const averageRank =
-        rankedEntries.length > 0
-          ? rankedEntries.reduce((sum, pt) => sum + (pt.rank ?? 0), 0) /
-            rankedEntries.length
-          : 0;
-      const bestRank =
-        rankedEntries.length > 0
-          ? Math.min(...rankedEntries.map((pt) => pt.rank!))
-          : null;
-      await prisma.playerStatistics.upsert({
-        where: { playerId: pid },
-        update: {
-          totalTournaments,
-          totalPoints,
-          averageRank,
-          bestRank,
-          bounty: totalBounty,
-        },
-        create: {
-          playerId: pid,
-          totalTournaments,
-          totalPoints,
-          averageRank,
-          bestRank,
-          bounty: totalBounty,
-        },
-      });
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ playerTournament: updated });
   } catch (e) {
     const detail = e instanceof Error ? e.message : String(e);
+    console.error("PATCH /api/tournaments/[tournamentId]/players error:", e);
     return NextResponse.json(
       { error: "Failed to update player.", detail },
       { status: 500 }

@@ -21,8 +21,6 @@ import {
 interface Player {
   id: string;
   name: string;
-  telegram?: string;
-  phone?: string;
   rank?: number;
   points?: number;
   bounty?: number;
