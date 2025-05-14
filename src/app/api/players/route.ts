@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       : undefined;
     const [players, total] = await Promise.all([
       prisma.player.findMany({
-        select: { id: true, name: true, telegram: true, phone: true, createdAt: true },
+        include: { statistics: true },
         where,
         orderBy: { name: "asc" },
         skip,
@@ -32,7 +32,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        players,
+        players: players.map(player => ({
+          id: player.id,
+          name: player.name,
+          telegram: player.telegram,
+          phone: player.phone,
+          createdAt: player.createdAt,
+          totalPoints: player.statistics?.totalPoints ?? 0,
+          tournaments: player.statistics?.totalTournaments ?? 0,
+          bounty: player.statistics?.bounty ?? 0,
+          averageRank: player.statistics?.averageRank ?? 0,
+          bestRank: player.statistics?.bestRank ?? null,
+        })),
         page,
         limit,
         total,

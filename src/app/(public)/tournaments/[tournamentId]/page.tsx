@@ -54,8 +54,8 @@ export default function TournamentPublicDetailPage() {
     const res = await fetch(`/api/tournaments/${tournamentId}`);
     if (res.ok) {
       const data = await res.json();
-      setTournament(data.tournament);
-      setEditTournament(data.tournament);
+      setTournament(data.data.tournament);
+      setEditTournament(data.data.tournament);
     }
     setLoading(false);
   }
@@ -128,8 +128,8 @@ export default function TournamentPublicDetailPage() {
     const refetch = await fetch(`/api/tournaments/${tournamentId}`);
     if (refetch.ok) {
       const data = await refetch.json();
-      setTournament(data.tournament);
-      setEditTournament(data.tournament);
+      setTournament(data.data.tournament);
+      setEditTournament(data.data.tournament);
     }
   };
 
@@ -150,15 +150,15 @@ export default function TournamentPublicDetailPage() {
       const refetch = await fetch(`/api/tournaments/${tournamentId}`);
       if (refetch.ok) {
         const data = await refetch.json();
-        setTournament(data.tournament);
-        setEditTournament(data.tournament);
+        setTournament(data.data.tournament);
+        setEditTournament(data.data.tournament);
       }
     }
   };
 
   if (loading)
     return (
-      <div className="flex flex-col gap-6 items-center w-full max-w-2xl mx-auto px-2 sm:px-4 md:px-6">
+      <div className="flex flex-col gap-6 items-center w-full max-w-3xl mx-auto px-1 sm:px-2 md:px-4 lg:px-8">
         <Card className="w-full border-2 border-transparent bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 group shadow-md">
           <CardHeader className="flex flex-row items-center gap-4 pb-2">
             <div className="flex-1">
@@ -191,7 +191,7 @@ export default function TournamentPublicDetailPage() {
     return <div className="p-8 text-destructive">Tournament not found</div>;
 
   return (
-    <div className="flex flex-col gap-6 items-center w-full max-w-2xl mx-auto px-2 sm:px-4 md:px-6">
+    <div className="flex flex-col gap-6 items-center w-full max-w-3xl mx-auto px-1 sm:px-2 md:px-4 lg:px-8">
       <Card className="w-full border-2 border-transparent hover:border-primary/60 bg-gradient-to-br from-white via-zinc-50 to-zinc-100 dark:from-zinc-900 dark:to-zinc-800 dark:via-zinc-950 group shadow-md">
         <CardHeader>
           <CardTitle className="text-lg md:text-2xl truncate max-w-full">
@@ -281,8 +281,8 @@ export default function TournamentPublicDetailPage() {
             <h3 className="font-semibold mt-4 mb-2 text-base md:text-lg">
               Players in this tournament:
             </h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full border rounded text-sm md:text-base">
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-[600px] w-full border rounded text-sm md:text-base">
                 <thead>
                   <tr className="bg-muted text-muted-foreground">
                     <th className="px-2 py-1 text-left">Name</th>
@@ -294,7 +294,7 @@ export default function TournamentPublicDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tournament.players.length === 0 && (
+                  {tournament && Array.isArray(tournament.players) && tournament.players.length === 0 && (
                     <tr>
                       <td
                         colSpan={isAdmin ? 6 : 5}
@@ -304,28 +304,45 @@ export default function TournamentPublicDetailPage() {
                       </td>
                     </tr>
                   )}
-                  {tournament.players.map((p) => (
-                    <PlayerRow
-                      key={p.id}
-                      player={p}
-                      tournamentId={tournament.id}
-                      isAdmin={isAdmin}
-                      onPlayerUpdated={async () => {
-                        // Refetch tournament after update
-                        const refetch = await fetch(
-                          `/api/tournaments/${tournament.id}`
-                        );
-                        if (refetch.ok) {
-                          const data = await refetch.json();
-                          setTournament(data.tournament);
-                          setEditTournament(data.tournament);
-                        }
-                      }}
-                      onRequestRemove={setConfirmRemove}
-                    />
-                  ))}
+                  {tournament && Array.isArray(tournament.players) && tournament.players.length > 0 &&
+  [...tournament.players]
+    .sort((a, b) => {
+      if (typeof a.rank === 'number' && typeof b.rank === 'number') return a.rank - b.rank;
+      if (typeof a.rank === 'number') return -1;
+      if (typeof b.rank === 'number') return 1;
+      return 0;
+    })
+    .map((p) => (
+      <PlayerRow
+        key={p.id}
+        player={p}
+        tournamentId={tournament.id}
+        isAdmin={isAdmin}
+        onPlayerUpdated={(updatedPlayer) => {
+          setTournament((prev) => {
+            if (!prev || !Array.isArray(prev.players)) return prev;
+            return {
+              ...prev,
+              players: prev.players.map((p) =>
+                p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+              ),
+            };
+          });
+          setEditTournament((prev) => {
+            if (!prev || !Array.isArray(prev.players)) return prev;
+            return {
+              ...prev,
+              players: prev.players.map((p) =>
+                p.id === updatedPlayer.id ? { ...p, ...updatedPlayer } : p
+              ),
+            };
+          });
+        }}
+        onRequestRemove={setConfirmRemove}
+      />
+    ))}
                   {/* Summary Row */}
-                  {tournament.players.length > 0 && (
+                  {tournament && Array.isArray(tournament.players) && tournament.players.length > 0 && (
                     <tr className="font-bold bg-muted/60">
                       <td className="px-2 py-1">Total</td>
                       <td className="px-2 py-1">—</td>
@@ -357,9 +374,11 @@ export default function TournamentPublicDetailPage() {
               <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-end mb-4 w-full mt-4">
                 <div className="flex-1 min-w-0">
                   <PlayerAutocomplete
-                    options={allPlayers.filter(
-                      (p) => !tournament.players.some((tp) => tp.id === p.id)
-                    )}
+                    options={Array.isArray(allPlayers) && Array.isArray(tournament?.players)
+                      ? allPlayers.filter(
+                          (p) => !tournament.players.some((tp) => tp.id === p.id)
+                        )
+                      : []}
                     value={addPlayerIds}
                     onChange={setAddPlayerIds}
                     disabled={addingPlayer}
@@ -447,19 +466,21 @@ export default function TournamentPublicDetailPage() {
   );
 }
 
-function PlayerRow({
+interface PlayerRowProps {
+  player: Player;
+  tournamentId: string;
+  isAdmin: boolean;
+  onPlayerUpdated: (updatedPlayer: Player) => void;
+  onRequestRemove: (playerId: string) => void;
+}
+
+const PlayerRow = React.memo(function PlayerRow({
   player,
   tournamentId,
   isAdmin,
   onPlayerUpdated,
   onRequestRemove,
-}: {
-  player: Player;
-  tournamentId: string;
-  isAdmin: boolean;
-  onPlayerUpdated: () => void;
-  onRequestRemove: (playerId: string) => void;
-}) {
+}: PlayerRowProps) {
   const [edit, setEdit] = React.useState(false);
   const [rank, setRank] = React.useState<number | "">(player.rank ?? "");
   const [points, setPoints] = React.useState<number | "">(player.points ?? "");
@@ -483,10 +504,10 @@ function PlayerRow({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         playerId: player.id,
-        rank: rank === "" ? null : Number(rank),
-        points: points === "" ? null : Number(points),
-        bounty: bounty === "" ? null : Number(bounty),
-        reentries: reentries === "" ? null : Number(reentries),
+        rank: rank === "" ? undefined : Number(rank),
+        points: points === "" ? undefined : Number(points),
+        bounty: bounty === "" ? undefined : Number(bounty),
+        reentries: reentries === "" ? undefined : Number(reentries),
       }),
     });
     setSaving(false);
@@ -497,7 +518,13 @@ function PlayerRow({
     }
     toast.success("Player updated");
     setEdit(false);
-    onPlayerUpdated();
+    onPlayerUpdated({
+      ...player,
+      rank: rank === "" ? undefined : Number(rank),
+      points: points === "" ? undefined : Number(points),
+      bounty: bounty === "" ? undefined : Number(bounty),
+      reentries: reentries === "" ? undefined : Number(reentries),
+    });
   };
 
   // Highlight special places (1st, 2nd, 3rd)
@@ -522,6 +549,7 @@ function PlayerRow({
       </tr>
     );
   }
+
   return (
     <tr className={highlight + " border-b last:border-b-0"}>
       <td className="px-2 py-1 truncate max-w-[120px] md:max-w-[220px] align-middle">
@@ -530,12 +558,10 @@ function PlayerRow({
       <td className="px-2 py-1 align-middle">
         {edit ? (
           <Input
-            type="number"
             value={rank}
-            onChange={(e) =>
-              setRank(e.target.value === "" ? "" : Number(e.target.value))
-            }
+            onChange={(e) => setRank(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-16"
+            type="number"
             min={1}
           />
         ) : (
@@ -545,11 +571,8 @@ function PlayerRow({
       <td className="px-2 py-1 align-middle">
         {edit ? (
           <Input
-            type="number"
             value={points}
-            onChange={(e) =>
-              setPoints(e.target.value === "" ? "" : Number(e.target.value))
-            }
+            onChange={(e) => setPoints(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-20"
           />
         ) : (
@@ -559,11 +582,8 @@ function PlayerRow({
       <td className="px-2 py-1 align-middle">
         {edit ? (
           <Input
-            type="number"
             value={bounty}
-            onChange={(e) =>
-              setBounty(e.target.value === "" ? "" : Number(e.target.value))
-            }
+            onChange={(e) => setBounty(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-20"
             min={0}
           />
@@ -574,11 +594,8 @@ function PlayerRow({
       <td className="px-2 py-1 align-middle">
         {edit ? (
           <Input
-            type="number"
             value={reentries}
-            onChange={(e) =>
-              setReentries(e.target.value === "" ? "" : Number(e.target.value))
-            }
+            onChange={(e) => setReentries(e.target.value === "" ? "" : Number(e.target.value))}
             className="w-20"
             min={0}
           />
@@ -586,13 +603,15 @@ function PlayerRow({
           player.reentries ?? "-"
         )}
       </td>
-      <td className="px-2 py-1 align-middle flex flex-col gap-1 sm:flex-row sm:gap-2">
+      <td className="px-2 py-1 align-middle">
+  <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full">
+
         {edit ? (
           <Button
             size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="mr-2 h-7"
+            className="w-full sm:w-auto h-9 px-4 font-medium"
           >
             {saving ? "Saving..." : "Save"}
           </Button>
@@ -601,7 +620,7 @@ function PlayerRow({
             size="sm"
             variant="outline"
             onClick={() => setEdit(true)}
-            className="mr-2 h-7"
+            className="w-full sm:w-auto h-9 px-4 font-medium"
           >
             Edit
           </Button>
@@ -617,7 +636,7 @@ function PlayerRow({
               setBounty(player.bounty ?? "");
               setReentries(player.reentries ?? "");
             }}
-            className="h-7"
+            className="w-full sm:w-auto h-9 px-4 font-medium"
           >
             Cancel
           </Button>
@@ -626,11 +645,14 @@ function PlayerRow({
           size="sm"
           variant="destructive"
           onClick={() => onRequestRemove(player.id)}
-          className="h-7"
+          className="w-full sm:w-auto h-9 px-4 font-medium"
         >
           Remove
         </Button>
+      </div>
       </td>
     </tr>
   );
-}
+});
+
+

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -48,8 +49,8 @@ export default function PlayerProfilePageWrapper({ params }: { params: Promise<{
         if (!res.ok) throw new Error("Player not found");
         return res.json();
       })
-      .then((data: PlayerProfile) => {
-        setPlayer(data);
+      .then((data) => {
+        setPlayer(data.data);
         setLoading(false);
       })
       .catch((err: Error) => {
@@ -113,7 +114,7 @@ export default function PlayerProfilePageWrapper({ params }: { params: Promise<{
 
 function PlayerProfilePage({ player }: { player: PlayerProfile }) {
   // Calculate total reentries
-  const totalReentries = player.tournamentHistory.reduce((sum, t) => sum + (t.reentries ?? 0), 0);
+  const totalReentries = (player.tournamentHistory ?? []).reduce((sum, t) => sum + (t.reentries ?? 0), 0);
   return (
     <div className="container mx-auto px-2 py-8">
       <h1 className="text-3xl font-bold mb-6 text-center animate-fade-in">{player.name}&apos;s Profile</h1>
@@ -164,16 +165,19 @@ function PlayerProfilePage({ player }: { player: PlayerProfile }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {player.tournamentHistory.length === 0 ? (
+                  {(player.tournamentHistory ?? []).length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center text-muted-foreground">No tournaments played yet.</TableCell>
                     </TableRow>
                   ) : (
-                    player.tournamentHistory.map((tournament) => (
+                    (player.tournamentHistory ?? []).map((tournament) => (
                       <TableRow key={tournament.id} tabIndex={0} className="focus:bg-accent/40 flex flex-col md:table-row border-b md:border-0">
                         {/* Mobile stacked view */}
                         <TableCell className="block md:table-cell font-semibold md:font-normal md:pl-2 md:pr-2">
-                          <span className="md:hidden text-xs text-muted-foreground">Name: </span>{tournament.name}
+                          <span className="md:hidden text-xs text-muted-foreground">Name: </span>
+                          <Link href={`/tournaments/${tournament.id}`} className="text-primary underline hover:text-primary/80 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-colors">
+                            {tournament.name}
+                          </Link>
                         </TableCell>
                         <TableCell className="block md:table-cell md:pl-2 md:pr-2">
                           <span className="md:hidden text-xs text-muted-foreground">Date: </span>{tournament.date}

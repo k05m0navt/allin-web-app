@@ -26,8 +26,8 @@ export default function TournamentsPage() {
     fetch(`/api/tournaments?page=${page}&limit=20`)
       .then((res) => res.json())
       .then((data) => {
-        setTournaments(data.tournaments || []);
-        setTotal(data.total || (data.tournaments?.length || 0) * (data.totalPages || 1));
+        setTournaments(data.data?.tournaments || []);
+        setTotal(data.data?.total || (data.data?.tournaments?.length || 0) * (data.data?.totalPages || 1));
         setTotalPages(data.totalPages || 1);
       })
       .finally(() => setLoading(false));

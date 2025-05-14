@@ -47,14 +47,16 @@ export async function GET(
               // worstRank is not present in the model, so we omit it from the response
             }
           : null,
-        tournamentHistory: player.tournaments.map((pt) => ({
-          id: pt.tournament.id,
-          name: pt.tournament.name,
-          date: pt.tournament.date instanceof Date ? pt.tournament.date.toISOString().slice(0, 10) : pt.tournament.date,
-          points: pt.points,
-          rank: pt.rank,
-          reentries: pt.reentries ?? 0,
-        })),
+        tournamentHistory: player.tournaments
+          .filter((pt) => pt.tournament)
+          .map((pt) => ({
+            id: pt.tournament.id,
+            name: pt.tournament.name,
+            date: pt.tournament.date instanceof Date ? pt.tournament.date.toISOString().slice(0, 10) : pt.tournament.date,
+            points: pt.points,
+            rank: pt.rank,
+            reentries: pt.reentries ?? 0,
+          })), 
       }
     });
   } catch (error) {

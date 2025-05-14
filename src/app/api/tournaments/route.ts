@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       }),
       prisma.tournament.count({ where }),
     ]);
+    console.log("[Tournaments List API] Tournament IDs:", tournaments.map(t => t.id));
     return NextResponse.json({
       success: true,
       data: {

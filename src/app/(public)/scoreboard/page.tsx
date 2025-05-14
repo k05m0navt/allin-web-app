@@ -12,7 +12,7 @@ export default function ScoreboardPage() {
       .then((res) => res.json())
       .then((data) => {
         // Sort and rank on client
-        const scoreboardData: ScoreboardPlayer[] = (data.players || []).map((p: any) => ({
+        const scoreboardData: ScoreboardPlayer[] = (data.data?.players || []).map((p: any) => ({
           ...p,
           totalPoints: p.totalPoints || 0,
           tournaments: p.tournaments || 0,

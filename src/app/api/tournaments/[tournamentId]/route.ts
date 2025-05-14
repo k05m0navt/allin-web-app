@@ -9,11 +9,16 @@ export async function GET(
 ) {
   const { tournamentId } = await context.params;
   try {
+    console.log("[Tournament Detail API] Requested tournamentId:", tournamentId);
+    // DEBUG: Directly check with findMany
+    const tournaments = await prisma.tournament.findMany({ where: { id: tournamentId } });
+    console.log("[Tournament Detail API] findMany result:", tournaments);
     // Use PlayerTournament join table to fetch players for this tournament
-    const tournament = await prisma.tournament.findUnique({
+    const tournament = await prisma.tournament.findFirst({
       where: { id: tournamentId },
     });
     if (!tournament) {
+      console.log(`[Tournament Detail API] Tournament not found for id: ${tournamentId}`);
       return NextResponse.json({ success: false, error: "Tournament not found" }, { status: 404 });
     }
     // Find all PlayerTournament records for this tournament, join Player
