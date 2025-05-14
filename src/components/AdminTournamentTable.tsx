@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Tournament = {
   id: string;
@@ -66,13 +67,6 @@ const AdminTournamentTable = () => {
     if (!editTournament) return;
     setEditLoading(true);
     setPrevTournaments(tournaments);
-    setTournaments(
-      tournaments.map((t) =>
-        t.id === editTournament.id
-          ? { ...t, name: editTournament.name, date: editTournament.date, location: editTournament.location, description: editTournament.description }
-          : t
-      )
-    );
     try {
       const res = await fetch(`/api/tournaments/${editTournament.id}`, {
         method: "PUT",
@@ -89,15 +83,19 @@ const AdminTournamentTable = () => {
         setEditLoading(false);
         return;
       }
-      const { tournament } = await res.json();
-      setTournaments(
-        tournaments.map((t) =>
-          t.id === tournament.id
-            ? { ...t, name: tournament.name, date: tournament.date, location: tournament.location, description: tournament.description }
-            : t
-        )
-      );
+      toast.success("Tournament updated!");
       closeEditDialog();
+      setLoading(true);
+      setTournaments([]);
+      fetch(`/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setTournaments(data.tournaments || []);
+          setPage(data.page || 1);
+          setTotalPages(data.totalPages || 1);
+          setTotal(data.total || (data.tournaments?.length || 0) * (data.totalPages || 1));
+        })
+        .finally(() => setLoading(false));
     } finally {
       setEditLoading(false);
     }
@@ -174,7 +172,7 @@ const AdminTournamentTable = () => {
           <form onSubmit={handleCreateTournament} className="flex flex-col sm:flex-row gap-2 items-stretch w-full">
             <Input
               placeholder="Name"
-              value={newTournamentName}
+              value={newTournamentName ?? ""}
               onChange={e => setNewTournamentName(e.target.value)}
               required
               aria-label="Tournament Name"
@@ -183,7 +181,7 @@ const AdminTournamentTable = () => {
             <Input
               placeholder="Date (YYYY-MM-DD)"
               type="date"
-              value={newTournamentDate}
+              value={newTournamentDate ?? ""}
               onChange={e => setNewTournamentDate(e.target.value)}
               required
               aria-label="Tournament Date"
@@ -191,7 +189,7 @@ const AdminTournamentTable = () => {
             />
             <Input
               placeholder="Location"
-              value={newTournamentLocation}
+              value={newTournamentLocation ?? ""}
               onChange={e => setNewTournamentLocation(e.target.value)}
               required
               aria-label="Tournament Location"
@@ -199,7 +197,7 @@ const AdminTournamentTable = () => {
             />
             <Input
               placeholder="Description (optional)"
-              value={newTournamentDescription}
+              value={newTournamentDescription ?? ""}
               onChange={e => setNewTournamentDescription(e.target.value)}
               aria-label="Tournament Description"
               className="flex-1 min-w-0"
@@ -230,7 +228,7 @@ const AdminTournamentTable = () => {
           )}
           <Input
             placeholder="Search tournaments by name or location..."
-            value={search}
+            value={search ?? ""}
             onChange={e => setSearch(e.target.value)}
             className="ml-auto max-w-xs"
             aria-label="Search tournaments"
@@ -352,7 +350,7 @@ const AdminTournamentTable = () => {
             <Input
               className="mb-2"
               placeholder="Tournament Name"
-              value={editTournament.name}
+              value={editTournament.name ?? ""}
               onChange={(e) =>
                 setEditTournament({ ...editTournament, name: e.target.value })
               }
@@ -362,7 +360,7 @@ const AdminTournamentTable = () => {
               className="mb-2"
               type="date"
               placeholder="Date"
-              value={editTournament.date.slice(0, 10)}
+              value={editTournament.date?.slice(0, 10) ?? ""}
               onChange={(e) =>
                 setEditTournament({ ...editTournament, date: e.target.value })
               }
@@ -371,7 +369,7 @@ const AdminTournamentTable = () => {
             <Input
               className="mb-2"
               placeholder="Location"
-              value={editTournament.location}
+              value={editTournament.location ?? ""}
               onChange={(e) =>
                 setEditTournament({ ...editTournament, location: e.target.value })
               }
@@ -380,7 +378,7 @@ const AdminTournamentTable = () => {
             <Input
               className="mb-4"
               placeholder="Description (optional)"
-              value={editTournament.description || ""}
+              value={editTournament.description ?? ""}
               onChange={(e) =>
                 setEditTournament({ ...editTournament, description: e.target.value })
               }

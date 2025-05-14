@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import AdminPlayerTable from "@/components/AdminPlayerTable";
 import AdminTournamentTable from "@/components/AdminTournamentTable";
+import AuditLogTable from "@/components/AdminPanel/AuditLogTable";
 
 interface PlayerWithDetails {
   id: string;
@@ -40,7 +41,7 @@ interface ClubStatistics {
   error?: string;
 }
 
-const TABS = ["Players", "Tournaments", "Statistics"];
+const TABS = ["Players", "Tournaments", "Statistics", "Audit Logs"];
 
 export default function AdminDashboardClient({
   players: initialPlayers,
@@ -190,8 +191,12 @@ export default function AdminDashboardClient({
         }),
       });
       if (!res.ok) {
-        const { error } = await res.json();
-        toast.error(error || "Failed to update player in DB");
+        let errMsg = `Failed to update player in DB`;
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch {}
+        toast.error(`Error: ${errMsg} (HTTP ${res.status})`);
         setEditLoading(false);
         return;
       }
@@ -210,7 +215,7 @@ export default function AdminDashboardClient({
       );
       toast.success("Player updated!");
       closeEditDialog();
-    } catch {
+    } catch (e) {
       toast.error("Failed to update player in DB");
     } finally {
       setEditLoading(false);
@@ -349,7 +354,7 @@ export default function AdminDashboardClient({
         </div>
       </div>
       <div className="mb-6">
-        <nav className="flex rounded-lg bg-muted p-1 w-fit mx-auto shadow-sm border border-muted-foreground/10">
+        <nav className="flex rounded-lg bg-muted p-1 w-full sm:w-fit sm:mx-auto shadow-sm border border-muted-foreground/10 overflow-x-auto sm:overflow-x-visible whitespace-nowrap sm:whitespace-normal scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
           {TABS.map((tab, idx) => (
             <button
               key={tab}
@@ -362,6 +367,7 @@ export default function AdminDashboardClient({
               onClick={() => setActiveTab(idx)}
               tabIndex={0}
               type="button"
+              style={{ minWidth: 120 }}
             >
               {tab}
             </button>
@@ -422,6 +428,11 @@ export default function AdminDashboardClient({
               </Card>
             </div>
           )}
+        </div>
+      )}
+      {activeTab === 3 && (
+        <div>
+          <AuditLogTable />
         </div>
       )}
     </div>

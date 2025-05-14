@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getUserFromRequest } from "@/lib/getUserFromRequest";
+import { getOrCreateUserFromRequest } from "@/lib/getUserFromRequest";
 
 // Explicit type for player update
 interface PlayerUpdateData {
@@ -61,7 +61,7 @@ export async function PUT(
   context: { params: Promise<{ playerId: string }> }
 ) {
   const { playerId } = await context.params;
-  const user = await getUserFromRequest();
+  const user = await getOrCreateUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -81,9 +81,19 @@ export async function PUT(
     const data: PlayerUpdateData = { name };
     if (telegram !== undefined) data.telegram = telegram;
     if (phone !== undefined) data.phone = phone;
+    const oldPlayer = await prisma.player.findUnique({ where: { id: playerId } });
     const updated = await prisma.player.update({
       where: { id: playerId },
       data,
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "UPDATE",
+        entityType: "Player",
+        entityId: playerId,
+        details: { old: oldPlayer, new: updated },
+      },
     });
     return NextResponse.json({ player: updated });
   } catch (error) {
@@ -100,14 +110,24 @@ export async function DELETE(
   context: { params: Promise<{ playerId: string }> }
 ) {
   const { playerId } = await context.params;
-  const user = await getUserFromRequest();
+  const user = await getOrCreateUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
   try {
+    const oldPlayer = await prisma.player.findUnique({ where: { id: playerId } });
     await prisma.playerStatistics.deleteMany({ where: { playerId } });
     await prisma.playerTournament.deleteMany({ where: { playerId } });
     await prisma.player.delete({ where: { id: playerId } });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "DELETE",
+        entityType: "Player",
+        entityId: playerId,
+        details: { deleted: oldPlayer },
+      },
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/players/[playerId] error:", error);

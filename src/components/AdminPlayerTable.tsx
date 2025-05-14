@@ -7,6 +7,7 @@ import { ScoreboardPagination } from "@/components/Scoreboard/ScoreboardPaginati
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type PlayerWithDetails = {
   id: string;
@@ -48,7 +49,7 @@ export default function AdminPlayerTable() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/players?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`)
+    fetch(`/api/players?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`)
       .then((res) => res.json())
       .then((data) => {
         setPlayers(data.players || []);
@@ -94,18 +95,27 @@ export default function AdminPlayerTable() {
       });
       if (!res.ok) {
         setPlayers(prevPlayers);
+        let errMsg = "Failed to update player";
+        try {
+          const err = await res.json();
+          errMsg = err.error || errMsg;
+        } catch {}
+        toast.error(errMsg);
         setEditLoading(false);
         return;
       }
-      const { player } = await res.json();
-      setPlayers(
-        players.map((p) =>
-          p.id === player.id
-            ? { ...p, name: player.name, telegram: player.telegram, phone: player.phone }
-            : p
-        )
-      );
+      toast.success("Player updated!");
       closeEditDialog();
+      setLoading(true);
+      fetch(`/api/players?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}&_=${Date.now()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setPlayers(data.players || []);
+          setPage(data.page || 1);
+          setTotalPages(data.totalPages || 1);
+          setTotal(data.total || (data.players?.length || 0) * (data.totalPages || 1));
+        })
+        .finally(() => setLoading(false));
     } finally {
       setEditLoading(false);
     }
@@ -225,7 +235,7 @@ export default function AdminPlayerTable() {
         )}
         <Input
           placeholder="Search players by name, telegram, or phone..."
-          value={search}
+          value={search ?? ""}
           onChange={e => setSearch(e.target.value)}
           className="ml-auto max-w-xs"
           aria-label="Search players"
@@ -347,21 +357,21 @@ export default function AdminPlayerTable() {
             <h2 className="text-lg font-bold mb-2">Edit Player</h2>
             <Input
               placeholder="Name"
-              value={editName}
+              value={editName ?? ""}
               onChange={(e) => setEditName(e.target.value)}
               className="mb-2"
               disabled={editLoading}
             />
             <Input
               placeholder="Telegram Username (optional)"
-              value={editTelegram}
+              value={editTelegram ?? ""}
               onChange={(e) => setEditTelegram(e.target.value)}
               className="mb-2"
               disabled={editLoading}
             />
             <Input
               placeholder="Phone (optional)"
-              value={editPhone}
+              value={editPhone ?? ""}
               onChange={(e) => setEditPhone(e.target.value)}
               className="mb-2"
               disabled={editLoading}

@@ -46,6 +46,15 @@ export async function POST(req: NextRequest) {
     const player = await prisma.player.create({
       data,
     });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "CREATE",
+        entityType: "Player",
+        entityId: player.id,
+        details: { created: player },
+      },
+    });
     return NextResponse.json({ player });
   } catch (error) {
     console.error("POST /api/admin/add-player error:", error);

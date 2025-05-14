@@ -1,21 +1,23 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   password  String
-  role      UserRole @default(PLAYER)
+  role      UserRole   @default(PLAYER)
   name      String
   telegram  String?
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
+  AuditLog  AuditLog[]
 }
 
 enum UserRole {
@@ -40,33 +42,44 @@ model Tournament {
   date        DateTime
   location    String
   description String?
-  
-  players     PlayerTournament[]
+
+  players PlayerTournament[]
 }
 
 model PlayerTournament {
-  id            String     @id @default(cuid())
-  playerId      String
-  tournamentId  String
-  points        Int        @default(0)
-  rank          Int?
-  bounty        Int?       @default(0)
-  reentries     Int        @default(1)
-  
-  player        Player     @relation(fields: [playerId], references: [id])
-  tournament    Tournament @relation(fields: [tournamentId], references: [id])
-  
+  id           String @id @default(cuid())
+  playerId     String
+  tournamentId String
+  points       Int    @default(0)
+  rank         Int?
+  bounty       Int?   @default(0)
+  reentries    Int    @default(1)
+
+  player     Player     @relation(fields: [playerId], references: [id])
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+
   @@unique([playerId, tournamentId])
 }
 
 model PlayerStatistics {
-  id                String  @id @default(cuid())
-  playerId          String  @unique
-  player            Player  @relation(fields: [playerId], references: [id])
-  
-  totalTournaments  Int     @default(0)
-  totalPoints       Int     @default(0)
-  averageRank       Float   @default(0)
-  bestRank          Int?
-  bounty            Int     @default(0)
+  id       String @id @default(cuid())
+  playerId String @unique
+  player   Player @relation(fields: [playerId], references: [id])
+
+  totalTournaments Int   @default(0)
+  totalPoints      Int   @default(0)
+  averageRank      Float @default(0)
+  bestRank         Int?
+  bounty           Int   @default(0)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  details    Json?
+  createdAt  DateTime @default(now())
 }

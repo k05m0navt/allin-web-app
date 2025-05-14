@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getUserFromRequest } from "@/lib/getUserFromRequest";
+import { getUserFromRequest, getOrCreateUserFromRequest } from "@/lib/getUserFromRequest";
 
 export async function GET(req: NextRequest) {
   try {
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const user = await getUserFromRequest();
+  const user = await getOrCreateUserFromRequest();
   if (!user || user.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -59,6 +59,15 @@ export async function POST(req: NextRequest) {
         date: new Date(date),
         location,
         description: description || undefined,
+      },
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "CREATE",
+        entityType: "Tournament",
+        entityId: tournament.id,
+        details: { created: tournament },
       },
     });
     return NextResponse.json({ tournament });

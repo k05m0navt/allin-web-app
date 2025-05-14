@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getOrCreateUserFromRequest } from "@/lib/getUserFromRequest";
 
 export async function GET(
   req: NextRequest,
@@ -70,12 +71,26 @@ export async function PUT(
   context: { params: Promise<{ tournamentId: string }> }
 ) {
   const { tournamentId } = await context.params;
+  const user = await getOrCreateUserFromRequest();
+  if (!user || user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   const data = await req.json();
 
   try {
+    const oldTournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
     const updated = await prisma.tournament.update({
       where: { id: tournamentId },
       data,
+    });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "UPDATE",
+        entityType: "Tournament",
+        entityId: tournamentId,
+        details: { old: oldTournament, new: updated },
+      },
     });
     return NextResponse.json({ tournament: updated });
   } catch (error) {
@@ -94,12 +109,10 @@ export async function DELETE(
   context: { params: Promise<{ tournamentId: string }> }
 ) {
   const { tournamentId } = await context.params;
-  // You may want to check admin auth here (if you have a getUserFromRequest helper)
-  // Example:
-  // const user = await getUserFromRequest(req);
-  // if (!user || user.role !== "ADMIN") {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  // }
+  const user = await getOrCreateUserFromRequest();
+  if (!user || user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
   try {
     // Find all playerIds who participated in this tournament
     const playerTournaments = await prisma.playerTournament.findMany({
@@ -108,10 +121,20 @@ export async function DELETE(
     const playerIds = Array.from(
       new Set(playerTournaments.map((pt) => pt.playerId))
     );
+    const oldTournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
     // Delete all PlayerTournament records for this tournament
     await prisma.playerTournament.deleteMany({ where: { tournamentId } });
     // Delete the tournament itself
     await prisma.tournament.delete({ where: { id: tournamentId } });
+    await prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "DELETE",
+        entityType: "Tournament",
+        entityId: tournamentId,
+        details: { deleted: oldTournament },
+      },
+    });
     // Recalculate statistics for affected players
     for (const pid of playerIds) {
       const participations = await prisma.playerTournament.findMany({
