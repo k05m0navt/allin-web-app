@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       prisma.player.findMany({
         select: { id: true, name: true, telegram: true, phone: true, createdAt: true },
         where,
-        orderBy: { name: "asc" },
+      orderBy: { name: "asc" },
         skip,
         take: limit,
       }),

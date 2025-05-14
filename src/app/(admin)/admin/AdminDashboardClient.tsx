@@ -247,35 +247,35 @@ export default function AdminDashboardClient({
   // Statistics state
   const [statistics, setStatistics] = useState<ClubStatistics | null>(null);
   useEffect(() => {
-    fetch("/api/statistics")
-      .then((res) => res.json())
-      .then((data) => {
-        if (
-          typeof data.totalPlayers === "number" &&
-          typeof data.totalTournaments === "number" &&
-          typeof data.totalReentries === "number" &&
-          typeof data.totalPoints === "number"
-        ) {
-          setStatistics(data);
-        } else {
+      fetch("/api/statistics")
+        .then((res) => res.json())
+        .then((data) => {
+          if (
+            typeof data.totalPlayers === "number" &&
+            typeof data.totalTournaments === "number" &&
+            typeof data.totalReentries === "number" &&
+            typeof data.totalPoints === "number"
+          ) {
+            setStatistics(data);
+          } else {
+            setStatistics({
+              totalPlayers: 0,
+              totalTournaments: 0,
+              totalReentries: 0,
+              totalPoints: 0,
+              error: data.error || "Failed to load statistics",
+            });
+          }
+        })
+        .catch(() =>
           setStatistics({
             totalPlayers: 0,
             totalTournaments: 0,
             totalReentries: 0,
             totalPoints: 0,
-            error: data.error || "Failed to load statistics",
-          });
-        }
-      })
-      .catch(() =>
-        setStatistics({
-          totalPlayers: 0,
-          totalTournaments: 0,
-          totalReentries: 0,
-          totalPoints: 0,
-          error: "Failed to load statistics",
-        })
-      );
+            error: "Failed to load statistics",
+          })
+        );
   }, []);
 
   // Banner for DB downtime

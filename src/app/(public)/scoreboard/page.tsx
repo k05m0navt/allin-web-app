@@ -21,12 +21,12 @@ export default function ScoreboardPage() {
           rank: 0,
         }));
         scoreboardData.sort((a: ScoreboardPlayer, b: ScoreboardPlayer) => {
-          if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
-          if (b.tournaments !== a.tournaments) return b.tournaments - a.tournaments;
-          if ((b.bounty ?? 0) !== (a.bounty ?? 0)) return (b.bounty ?? 0) - (a.bounty ?? 0);
-          if (a.averageRank !== b.averageRank) return a.averageRank - b.averageRank;
-          return a.name.localeCompare(b.name);
-        });
+    if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+    if (b.tournaments !== a.tournaments) return b.tournaments - a.tournaments;
+    if ((b.bounty ?? 0) !== (a.bounty ?? 0)) return (b.bounty ?? 0) - (a.bounty ?? 0);
+    if (a.averageRank !== b.averageRank) return a.averageRank - b.averageRank;
+    return a.name.localeCompare(b.name);
+  });
         scoreboardData.forEach((p: ScoreboardPlayer, i: number) => (p.rank = i + 1));
         setPlayers(scoreboardData);
       })
