@@ -60,6 +60,8 @@ export async function GET(
               : tournament.date,
           location: tournament.location,
           description: tournament.description,
+          buyin: tournament.buyin ?? 0,
+          rebuy: tournament.rebuy ?? 0,
           players,
         },
       },
@@ -91,6 +93,8 @@ export async function PUT(
     date: z.string().optional(),
     location: z.string().optional(),
     description: z.string().optional(),
+    buyin: z.number().min(0).optional(),
+    rebuy: z.number().min(0).optional(),
   });
   const parseResult = TournamentUpdateSchema.safeParse(json);
   if (!parseResult.success) {

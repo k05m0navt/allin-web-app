@@ -54,6 +54,8 @@ const TournamentCreateSchema = z.object({
   date: z.string().min(1, "Date is required"),
   location: z.string().min(1, "Location is required"),
   description: z.string().optional(),
+  buyin: z.number().min(0).default(0),
+  rebuy: z.number().min(0).default(0),
 });
 type TournamentCreateData = z.infer<typeof TournamentCreateSchema>;
 
@@ -73,13 +75,15 @@ export async function POST(req: NextRequest) {
     if (!parseResult.success) {
       return NextResponse.json({ success: false, error: parseResult.error.errors.map(e => e.message).join(", ") }, { status: 400 });
     }
-    const { name, date, location, description } = parseResult.data;
+    const { name, date, location, description, buyin, rebuy } = parseResult.data;
     const tournament = await prisma.tournament.create({
       data: {
         name,
         date: new Date(date),
         location,
         description: description || undefined,
+        buyin: typeof buyin === 'number' ? buyin : 0,
+        rebuy: typeof rebuy === 'number' ? rebuy : 0,
       },
     });
     await prisma.auditLog.create({

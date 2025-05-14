@@ -43,6 +43,9 @@ model Tournament {
   location    String
   description String?
 
+  buyin       Int      @default(0) // NEW: buy-in sum for this tournament
+  rebuy       Int      @default(0) // NEW: rebuy sum for this tournament
+
   players PlayerTournament[]
 }
 
@@ -53,7 +56,8 @@ model PlayerTournament {
   points       Int    @default(0)
   rank         Int?
   bounty       Int?   @default(0)
-  reentries    Int    @default(1)
+  reentries    Int    @default(0)
+
 
   player     Player     @relation(fields: [playerId], references: [id])
   tournament Tournament @relation(fields: [tournamentId], references: [id])

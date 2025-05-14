@@ -16,6 +16,8 @@ type Tournament = {
   date: string;
   location: string;
   description?: string | null;
+  buyin?: number;
+  rebuy?: number;
 };
 
 const AdminTournamentTable = () => {
@@ -31,6 +33,8 @@ const AdminTournamentTable = () => {
   const [newTournamentDate, setNewTournamentDate] = useState("");
   const [newTournamentLocation, setNewTournamentLocation] = useState("");
   const [newTournamentDescription, setNewTournamentDescription] = useState("");
+  const [newTournamentBuyin, setNewTournamentBuyin] = useState(0);
+  const [newTournamentRebuy, setNewTournamentRebuy] = useState(0);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -47,25 +51,42 @@ const AdminTournamentTable = () => {
     setPage(1);
   }, [search]);
 
-  useEffect(() => {
+  const fetchTournaments = useCallback(async () => {
     setLoading(true);
-    fetch(`/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`)
-      .then((res) => res.json())
-      .then((result) => {
-        if (result.success && result.data) {
-          setTournaments(result.data.tournaments || []);
-          setPage(result.data.page || 1);
-          setTotalPages(result.data.totalPages || 1);
-          setTotal(result.data.total || (result.data.tournaments?.length || 0) * (result.data.totalPages || 1));
-        } else {
-          setTournaments([]);
-          setPage(1);
-          setTotalPages(1);
-          setTotal(0);
-        }
-      })
-      .finally(() => setLoading(false));
+    try {
+      const res = await fetch(
+        `/api/tournaments?page=${page}&limit=20${search ? `&search=${encodeURIComponent(search)}` : ""}`,
+        { cache: 'no-store' }
+      );
+      const result = await res.json();
+      console.log("[AdminTournamentTable] Received response:", result);
+      if (result.success && result.data) {
+        console.log("[AdminTournamentTable] Setting tournaments:", result.data.tournaments);
+        setTournaments(result.data.tournaments || []);
+        setPage(result.data.page || 1);
+        setTotalPages(result.data.totalPages || 1);
+        setTotal(result.data.total || (result.data.tournaments?.length || 0) * (result.data.totalPages || 1));
+      } else {
+        console.log("[AdminTournamentTable] No tournaments found or error:", result);
+        setTournaments([]);
+        setPage(1);
+        setTotalPages(1);
+        setTotal(0);
+      }
+    } catch (error) {
+      console.error("[AdminTournamentTable] Error fetching tournaments:", error);
+      setTournaments([]);
+      setPage(1);
+      setTotalPages(1);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
   }, [page, search]);
+
+  useEffect(() => {
+    fetchTournaments();
+  }, [fetchTournaments]);
 
   const openEditDialog = (t: Tournament) => setEditTournament(t);
   const closeEditDialog = () => setEditTournament(null);
@@ -83,6 +104,8 @@ const AdminTournamentTable = () => {
           date: editTournament.date,
           location: editTournament.location,
           description: editTournament.description,
+          buyin: editTournament.buyin,
+          rebuy: editTournament.rebuy,
         }),
       });
       if (!res.ok) {
@@ -138,11 +161,13 @@ const AdminTournamentTable = () => {
     }
     setCreateLoading(true);
     const optimisticTournament = {
-      id: `temp-${Date.now()}`,
+      id: 'temp-' + Date.now(),
       name: newTournamentName,
       date: newTournamentDate,
       location: newTournamentLocation,
       description: newTournamentDescription,
+      buyin: Number(newTournamentBuyin) || 0,
+      rebuy: Number(newTournamentRebuy) || 0,
     };
     setPrevTournaments(tournaments);
     setTournaments([optimisticTournament, ...tournaments]);
@@ -155,20 +180,34 @@ const AdminTournamentTable = () => {
           date: newTournamentDate,
           location: newTournamentLocation,
           description: newTournamentDescription,
+          buyin: Number(newTournamentBuyin) || 0,
+          rebuy: Number(newTournamentRebuy) || 0,
         }),
       });
+
+      const data = await res.json();
+      
       if (!res.ok) {
-        const { error } = await res.json();
-        setCreateError(error || "Failed to add tournament");
-        setCreateLoading(false);
+        setTournaments(prevTournaments); // Rollback optimistic update
+        setCreateError(data.error || "Failed to add tournament");
         return;
       }
-      const { tournament } = await res.json();
-      setTournaments([tournament, ...tournaments]);
-      setNewTournamentName("");
-      setNewTournamentDate("");
-      setNewTournamentLocation("");
-      setNewTournamentDescription("");
+
+      const tournament = data?.data?.tournament;
+      if (tournament && tournament.id) {
+        setTournaments(prev => [tournament, ...prev.filter(t => t.id !== optimisticTournament.id)]);
+        setNewTournamentName("");
+        setNewTournamentDate("");
+        setNewTournamentLocation("");
+        setNewTournamentDescription("");
+        setNewTournamentBuyin(1000);
+        setNewTournamentRebuy(1000);
+        // Force a fresh fetch after successful creation
+        await fetchTournaments();
+      }
+    } catch (error) {
+      setTournaments(prevTournaments); // Rollback optimistic update
+      setCreateError("Failed to add tournament. Please try again.");
     } finally {
       setCreateLoading(false);
     }
@@ -267,7 +306,7 @@ const AdminTournamentTable = () => {
             </div>
           ) : (
             tournaments.length > 0 ? (
-              <div>
+              <div className="flex flex-col gap-4">
                 {tournaments.map((t) => (
                   <Card
                     key={t.id}
@@ -348,8 +387,20 @@ const AdminTournamentTable = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center text-muted-foreground mt-8 text-base">
-                No tournaments found.
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <span
+                  className="text-6xl mb-4 select-none"
+                  role="img"
+                  aria-label="No tournaments"
+                >
+                  🏆
+                </span>
+                <div className="text-xl font-semibold mb-2 text-zinc-800 dark:text-zinc-100">
+                  No tournaments found
+                </div>
+                <div className="text-md text-zinc-500 dark:text-zinc-400 max-w-md">
+                  There are currently no tournaments. Please check back later or create a new one above.
+                </div>
               </div>
             )
           )}
@@ -362,6 +413,51 @@ const AdminTournamentTable = () => {
         onPageChange={setPage}
         loading={loading}
       />
+      {/* Bulk Delete Confirmation Dialog */}
+      {confirmBulkDelete && (
+        <Dialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Selected Tournaments?</DialogTitle>
+            </DialogHeader>
+            <div className="py-2 text-center">
+              <span className="text-4xl select-none" role="img" aria-label="Warning">⚠️</span>
+              <div className="mt-2 mb-1 text-lg font-semibold">Are you sure?</div>
+              <div className="text-zinc-600 dark:text-zinc-300 mb-2">
+                This will permanently delete <span className="font-bold">{selectedIds.length}</span> tournament{selectedIds.length > 1 ? 's' : ''}. This action cannot be undone.
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmBulkDelete(false)} autoFocus aria-label="Cancel bulk delete">
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                aria-label="Confirm bulk delete tournaments"
+                disabled={loading}
+                onClick={async () => {
+                  setConfirmBulkDelete(false);
+                  setLoading(true);
+                  const prev = tournaments;
+                  setTournaments(tournaments.filter(t => !selectedIds.includes(t.id)));
+                  setSelectedIds([]);
+                  try {
+                    await Promise.all(selectedIds.map(id => fetch(`/api/tournaments/${id}`, { method: 'DELETE' })));
+                    toast.success('Selected tournaments deleted');
+                  } catch {
+                    setTournaments(prev);
+                    toast.error('Failed to delete one or more tournaments');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? <Skeleton className="h-5 w-14" /> : "Delete"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
       {/* Edit Dialog */}
       {editTournament && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50 px-2">
@@ -396,6 +492,24 @@ const AdminTournamentTable = () => {
               disabled={editLoading}
             />
             <Input
+              className="mb-2"
+              type="number"
+              min={0}
+              placeholder="Buy-in (₽)"
+              value={editTournament.buyin ?? 0}
+              onChange={e => setEditTournament({ ...editTournament, buyin: Number(e.target.value) })}
+              disabled={editLoading}
+            />
+            <Input
+              className="mb-2"
+              type="number"
+              min={0}
+              placeholder="Rebuy (₽)"
+              value={editTournament.rebuy ?? 0}
+              onChange={e => setEditTournament({ ...editTournament, rebuy: Number(e.target.value) })}
+              disabled={editLoading}
+            />
+            <Input
               className="mb-4"
               placeholder="Description (optional)"
               value={editTournament.description ?? ""}
@@ -406,8 +520,12 @@ const AdminTournamentTable = () => {
             />
             <div className="flex gap-2">
               <Button
-                onClick={handleEditSave}
+                onClick={async () => {
+                  await handleEditSave();
+                  toast.success('Tournament updated');
+                }}
                 disabled={editLoading}
+                aria-label="Save tournament changes"
               >
                 {editLoading ? <Skeleton className="h-5 w-20" /> : "Save"}
               </Button>
@@ -415,6 +533,8 @@ const AdminTournamentTable = () => {
                 variant="outline"
                 onClick={closeEditDialog}
                 disabled={editLoading}
+                aria-label="Cancel edit tournament"
+                autoFocus
               >
                 Cancel
               </Button>
@@ -430,56 +550,27 @@ const AdminTournamentTable = () => {
           </DialogHeader>
           <div>Are you sure you want to delete this tournament? This action cannot be undone.</div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
+            <Button variant="outline" onClick={() => setConfirmDeleteId(null)} autoFocus aria-label="Cancel delete">
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                if (confirmDeleteId) handleDeleteTournament(confirmDeleteId);
+              aria-label="Confirm delete tournament"
+              disabled={!!deleteLoadingId}
+              onClick={async () => {
+                if (confirmDeleteId) {
+                  await handleDeleteTournament(confirmDeleteId);
+                  toast.success('Tournament deleted');
+                }
                 setConfirmDeleteId(null);
               }}
             >
-              Delete
+              {deleteLoadingId ? <Skeleton className="h-5 w-14" /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog open={confirmBulkDelete} onOpenChange={open => !open && setConfirmBulkDelete(false)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Selected Tournaments?</DialogTitle>
-          </DialogHeader>
-          <div>Are you sure you want to delete {selectedIds.length} selected tournaments? This action cannot be undone.</div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                setConfirmBulkDelete(false);
-                setPrevTournaments(tournaments);
-                const toDelete = selectedIds;
-                setTournaments(tournaments.filter(t => !toDelete.includes(t.id)));
-                setSelectedIds([]);
-                const failed: string[] = [];
-                await Promise.all(toDelete.map(async id => {
-                  const res = await fetch(`/api/tournaments/${id}`, { method: "DELETE" });
-                  if (!res.ok) failed.push(id);
-                }));
-                if (failed.length) {
-                  setTournaments(prevTournaments);
-                  // Optionally: show a toast error
-                }
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 };

@@ -3,12 +3,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies as nextCookies } from "next/headers";
 
-export async function createSupabaseServerClient() {
-  const cookieStore = await nextCookies();
+export async function createSupabaseServerClient(cookieStore?: Awaited<ReturnType<typeof nextCookies>>) {
+  const cookies = cookieStore || await nextCookies();
 
-  // Adapter for Supabase SSR expected interface
   const cookieAdapter = {
-    get: (_name: string) => cookieStore.get(_name)?.value,
+    get: (_name: string) => cookies.get(_name)?.value,
     set: () => {},
     remove: () => {},
   };

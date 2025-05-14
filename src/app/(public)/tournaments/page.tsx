@@ -21,9 +21,10 @@ export default function TournamentsPage() {
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
+  // Helper to fetch tournaments (can be passed as callback)
+  const fetchTournaments = (pageOverride?: number) => {
     setLoading(true);
-    fetch(`/api/tournaments?page=${page}&limit=20`)
+    fetch(`/api/tournaments?page=${pageOverride ?? page}&limit=20&_=${Date.now()}`)
       .then((res) => res.json())
       .then((data) => {
         setTournaments(data.data?.tournaments || []);
@@ -31,7 +32,16 @@ export default function TournamentsPage() {
         setTotalPages(data.totalPages || 1);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchTournaments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  // Pass fetchTournaments to your create tournament modal/form as onCreated
+  // Example usage:
+  // <CreateTournamentModal onCreated={() => { setPage(1); fetchTournaments(1); }} />
 
   return (
     <div className="max-w-2xl mx-auto py-8 px-4">
@@ -39,8 +49,20 @@ export default function TournamentsPage() {
       <div className="space-y-4">
         {loading && <div className="text-center">Loading...</div>}
         {!loading && tournaments.length === 0 && (
-          <div className="text-center text-muted-foreground">
-            No tournaments found.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <span
+              className="text-6xl mb-4 select-none"
+              role="img"
+              aria-label="No tournaments"
+            >
+              🏆
+            </span>
+            <div className="text-xl font-semibold mb-2 text-zinc-800 dark:text-zinc-100">
+              No tournaments found
+            </div>
+            <div className="text-md text-zinc-500 dark:text-zinc-400 max-w-md">
+              There are currently no tournaments. Please check back later or create a new one if you have admin access.
+            </div>
           </div>
         )}
         {tournaments.map((tournament) => (

@@ -384,8 +384,12 @@ export default function AdminPlayerTable() {
             />
             <div className="flex gap-2">
               <Button
-                onClick={handleEditSave}
+                onClick={async () => {
+                  await handleEditSave();
+                  toast.success('Player updated');
+                }}
                 disabled={editLoading}
+                aria-label="Save player changes"
               >
                 {editLoading ? <Skeleton className="h-5 w-20" /> : "Save"}
               </Button>
@@ -393,6 +397,8 @@ export default function AdminPlayerTable() {
                 variant="outline"
                 onClick={closeEditDialog}
                 disabled={editLoading}
+                aria-label="Cancel edit player"
+                autoFocus
               >
                 Cancel
               </Button>
@@ -408,17 +414,22 @@ export default function AdminPlayerTable() {
           </DialogHeader>
           <div>Are you sure you want to delete this player? This action cannot be undone.</div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDeleteId(null)}>
+            <Button variant="outline" onClick={() => setConfirmDeleteId(null)} autoFocus aria-label="Cancel delete">
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                if (confirmDeleteId) handleDeletePlayer(confirmDeleteId);
+              aria-label="Confirm delete player"
+              disabled={!!deleteLoadingId}
+              onClick={async () => {
+                if (confirmDeleteId) {
+                  await handleDeletePlayer(confirmDeleteId);
+                  toast.success('Player deleted');
+                }
                 setConfirmDeleteId(null);
               }}
             >
-              Delete
+              {deleteLoadingId ? <Skeleton className="h-5 w-14" /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -431,29 +442,32 @@ export default function AdminPlayerTable() {
           </DialogHeader>
           <div>Are you sure you want to delete {selectedIds.length} selected players? This action cannot be undone.</div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)}>
+            <Button variant="outline" onClick={() => setConfirmBulkDelete(false)} autoFocus aria-label="Cancel bulk delete">
               Cancel
             </Button>
             <Button
               variant="destructive"
+              aria-label="Confirm bulk delete players"
+              disabled={loading}
               onClick={async () => {
                 setConfirmBulkDelete(false);
                 setPrevPlayers(players);
                 const toDelete = selectedIds;
                 setPlayers(players.filter(p => !toDelete.includes(p.id)));
                 setSelectedIds([]);
-                const failed: string[] = [];
-                await Promise.all(toDelete.map(async id => {
-                  const res = await fetch(`/api/players/${id}`, { method: "DELETE" });
-                  if (!res.ok) failed.push(id);
-                }));
-                if (failed.length) {
+                try {
+                  await Promise.all(toDelete.map(async id => {
+                    const res = await fetch(`/api/players/${id}`, { method: "DELETE" });
+                    if (!res.ok) throw new Error('Failed');
+                  }));
+                  toast.success('Selected players deleted');
+                } catch {
                   setPlayers(prevPlayers);
-                  // Optionally: show a toast error
+                  toast.error('Failed to delete one or more players');
                 }
               }}
             >
-              Delete
+              {loading ? <Skeleton className="h-5 w-14" /> : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -6,7 +6,13 @@ import { createSupabaseServerClient } from "@/lib/supabaseServer";
 export async function middleware(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   // Use getUser for secure, authenticated user info
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+
+  console.log('MIDDLEWARE: cookies', req.cookies.getAll());
+  console.log("MIDDLEWARE: user", user, "error", error);
 
   // Check if the path requires admin authentication
   const adminPaths = ["/admin"];
@@ -22,6 +28,7 @@ export async function middleware(req: NextRequest) {
 
     // Check for admin role
     const userRole = user.user_metadata?.role || user.role;
+    console.log("MIDDLEWARE: userRole", userRole);
     if (userRole !== "ADMIN") {
       return NextResponse.redirect(new URL("/login", req.url));
     }

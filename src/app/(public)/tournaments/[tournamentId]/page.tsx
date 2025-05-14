@@ -34,6 +34,17 @@ interface Tournament {
   location: string;
   description?: string | null;
   players: Player[];
+  buyin?: number;
+  rebuy?: number;
+}
+
+interface Tournament {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  description?: string | null;
+  players: Player[];
 }
 
 export default function TournamentPublicDetailPage() {
@@ -298,9 +309,15 @@ export default function TournamentPublicDetailPage() {
                     <tr>
                       <td
                         colSpan={isAdmin ? 6 : 5}
-                        className="text-muted-foreground px-2 py-2"
+                        className="px-2 py-6 text-center bg-zinc-50 dark:bg-zinc-900"
                       >
-                        No players yet
+                        <div className="flex flex-col items-center gap-2">
+                          <span role="img" aria-label="No players" className="text-4xl mb-1">🃏</span>
+                          <span className="text-muted-foreground font-medium">No players yet</span>
+                          {isAdmin && (
+                            <span className="text-xs text-muted-foreground">Use the Add Player button above to invite participants!</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   )}
@@ -316,6 +333,7 @@ export default function TournamentPublicDetailPage() {
       <PlayerRow
         key={p.id}
         player={p}
+        tournament={tournament}
         tournamentId={tournament.id}
         isAdmin={isAdmin}
         onPlayerUpdated={(updatedPlayer) => {
@@ -474,8 +492,18 @@ interface PlayerRowProps {
   onRequestRemove: (playerId: string) => void;
 }
 
+interface PlayerRowProps {
+  player: Player;
+  tournament: Tournament;
+  tournamentId: string;
+  isAdmin: boolean;
+  onPlayerUpdated: (updatedPlayer: Player) => void;
+  onRequestRemove: (playerId: string) => void;
+}
+
 const PlayerRow = React.memo(function PlayerRow({
   player,
+  tournament,
   tournamentId,
   isAdmin,
   onPlayerUpdated,
@@ -546,6 +574,11 @@ const PlayerRow = React.memo(function PlayerRow({
         <td className="px-2 py-1">{player.points ?? "-"}</td>
         <td className="px-2 py-1">{player.bounty ?? "-"}</td>
         <td className="px-2 py-1">{player.reentries ?? "-"}</td>
+        <td className="px-2 py-1">
+          {typeof tournament?.buyin === 'number' && typeof tournament?.rebuy === 'number' && typeof player.reentries === 'number'
+            ? (tournament.buyin + player.reentries * tournament.rebuy)
+            : '-'}
+        </td>
       </tr>
     );
   }
@@ -604,11 +637,17 @@ const PlayerRow = React.memo(function PlayerRow({
         )}
       </td>
       <td className="px-2 py-1 align-middle">
+        {typeof tournament.buyin === 'number' && typeof tournament.rebuy === 'number' && typeof player.reentries === 'number'
+          ? (tournament.buyin + player.reentries * tournament.rebuy)
+          : '-'}
+      </td>
+      <td className="px-2 py-1 align-middle">
   <div className="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full">
 
         {edit ? (
           <Button
             size="sm"
+            aria-label="Save player changes"
             onClick={handleSave}
             disabled={saving}
             className="w-full sm:w-auto h-9 px-4 font-medium"
@@ -618,6 +657,7 @@ const PlayerRow = React.memo(function PlayerRow({
         ) : (
           <Button
             size="sm"
+            aria-label="Save player changes"
             variant="outline"
             onClick={() => setEdit(true)}
             className="w-full sm:w-auto h-9 px-4 font-medium"
@@ -628,6 +668,7 @@ const PlayerRow = React.memo(function PlayerRow({
         {edit && (
           <Button
             size="sm"
+            aria-label="Save player changes"
             variant="ghost"
             onClick={() => {
               setEdit(false);
@@ -644,6 +685,7 @@ const PlayerRow = React.memo(function PlayerRow({
         <Button
           size="sm"
           variant="destructive"
+          aria-label="Remove player"
           onClick={() => onRequestRemove(player.id)}
           className="w-full sm:w-auto h-9 px-4 font-medium"
         >
